@@ -153,9 +153,9 @@ const ExcelFilterApp = () => {
                 >
                   LinkedIn
                 </a>
-                {' '}or{' '}
+                {' '}and view the source code on{' '}
                 <a 
-                  href="https://github.com/azudev4"
+                  href="https://github.com/azudev4/semrush-excel-filter"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#004526] hover:underline"

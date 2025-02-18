@@ -26,6 +26,8 @@ A Next.js application designed to process and filter Semrush keyword data export
 - **Export Features**
   - Combined Excel workbook output
   - Optional summary sheet with total volumes
+  - "All Keywords" sheet combining data from all files
+  - Interactive hyperlinks in summary sheet for quick navigation
   - Professional styling with alternating row colors
   - Formatted headers and cell borders
   - Custom filename for export
@@ -49,8 +51,8 @@ A Next.js application designed to process and filter Semrush keyword data export
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
-cd lacoste-semrush-filter
+git clone https://github.com/azudev4/semrush-excel-filter.git
+cd semrush-excel-filter
 ```
 
 2. Install dependencies:
@@ -101,7 +103,9 @@ yarn dev
 4. **Export Results**
    - Click "Download Combined File" to get the processed Excel workbook
    - Each file will be in its own sheet
-   - Optional summary sheet with total volumes
+   - Optional summary sheet with total volumes and hyperlinks to individual sheets
+   - "All Keywords" sheet containing combined data from all processed files
+   - Easy navigation between sheets using hyperlinks in the summary sheet
 
 ## Data Processing Rules
 

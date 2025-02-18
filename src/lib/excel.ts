@@ -10,16 +10,20 @@ export const formatSheetName = (fileName: string): string => {
     .join(' ');
 };
 
-export const formatData = (data: any[], minVolume: number): any[] => {
+export const formatData = (
+  data: Record<string, string | number>[],
+  minVolume: number
+): Record<string, string | number>[] => {
   return data
     .map(row => {
-      const newRow: any = {};
+      const newRow: Record<string, string | number> = {};
       Object.entries(row).forEach(([key, value]) => {
         if (!COLUMNS_TO_EXCLUDE.includes(key)) {
           if (key === 'Volume') {
-            newRow[key] = typeof value === 'string' 
-              ? parseInt(value.replace(/[^0-9]/g, ''), 10) 
-              : typeof value === 'number' ? value : 0;
+            const volumeValue = typeof value === 'string' ? parseInt(value.replace(/,/g, ''), 10) : value;
+            if (!isNaN(volumeValue) && volumeValue >= minVolume) {
+              newRow[key] = volumeValue;
+            }
           } else {
             newRow[key] = value;
           }
@@ -27,8 +31,5 @@ export const formatData = (data: any[], minVolume: number): any[] => {
       });
       return newRow;
     })
-    .filter(row => {
-      const volume = row.Volume;
-      return !isNaN(volume) && volume >= minVolume;
-    });
+    .filter(row => Object.keys(row).length > 0);
 }; 

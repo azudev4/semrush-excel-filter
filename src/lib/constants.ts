@@ -1,14 +1,14 @@
 import type { InputHTMLAttributes } from 'react';
 
 export const DEFAULT_STORES = [
-  'lacoste', 'zalando', 'asos', 'amazon', 'farfetch', 'mytheresa',
+  'zalando', 'asos', 'amazon', 'farfetch', 'mytheresa',
   'net-a-porter', 'matchesfashion', 'ssense', 'nordstrom', 'shopbop',
   'luisaviaroma', 'ralph lauren', 'tommy hilfiger', 'calvin klein',
   'hugo boss', 'nike', 'adidas', 'puma', 'the outnet', 'yoox',
   'end clothing', 'mr porter', 'browns fashion', 'flannels', 'selfridges',
   'harrods', 'bloomingdales', 'saks fifth avenue', 'neiman marcus',
   'bergdorf goodman', 'galeries lafayette', 'printemps', 'la redoute',
-  'spartoo', 'about you', 'boozt', 'breuninger'
+  'spartoo', 'about you', 'boozt', 'breuninger', 'uniqlo'
 ];
 
 export const ACCEPTED_FILE_TYPES = ['.xlsx', '.xls', '.csv'] as const;
@@ -17,8 +17,8 @@ export const DEFAULT_MIN_VOLUME = 100;
 
 export interface FileData {
   id: string;
-  originalData: any[];
-  filteredData: any[];
+  originalData: Record<string, string | number>[];
+  filteredData: Record<string, string | number>[];
   fileName: string;
   sheetName: string;
   originalRows: number;

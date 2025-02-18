@@ -22,7 +22,6 @@ import {
 import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
 import { formatSheetName } from '@/lib/excel';
 import { processExcelFile, downloadExcelFile } from '@/lib/services/excelProcessor';
-import { Github, Linkedin } from 'lucide-react';
 
 const ExcelFilterApp = () => {
   const [defaultShops, setDefaultShops] = useState<string[]>(DEFAULT_STORES);

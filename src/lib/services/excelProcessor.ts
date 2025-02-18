@@ -33,7 +33,7 @@ export const processExcelFile = async (
               sheets: 0,
               PRN: true
             });
-          } catch (error) {
+          } catch {
             throw new Error('INVALID_CSV_FORMAT');
           }
         } else {
@@ -44,7 +44,7 @@ export const processExcelFile = async (
               cellDates: true,
               dateNF: 'yyyy-mm-dd'
             });
-          } catch (error) {
+          } catch {
             throw new Error('INVALID_EXCEL_FORMAT');
           }
         }
@@ -64,7 +64,7 @@ export const processExcelFile = async (
             blankrows: false,
             header: 1
           });
-        } catch (error) {
+        } catch {
           throw new Error('SHEET_PARSING_ERROR');
         }
 
@@ -89,9 +89,9 @@ export const processExcelFile = async (
 
         const dataRows = jsonData.slice(1);
         const formattedJsonData = dataRows.map((row: unknown) => {
-          const obj: any = {};
+          const obj: Record<string, string | number> = {};
           headers.forEach((header, index) => {
-            obj[header.trim()] = (row as any[])[index];
+            obj[header.trim()] = (row as (string | number)[])[index];
           });
           return obj;
         });
@@ -220,7 +220,10 @@ export const downloadExcelFile = (
   // First add summary sheet if enabled
   if (includeSummarySheet) {
     const sheetSummaries = files.map(file => {
-      const totalVolume = file.filteredData.reduce((sum, row) => sum + (row.Volume || 0), 0);
+      const totalVolume = file.filteredData.reduce((sum, row) => {
+        const volume = typeof row.Volume === 'string' ? parseInt(row.Volume, 10) : (row.Volume as number);
+        return sum + (isNaN(volume) ? 0 : volume);
+      }, 0);
       return {
         sheetName: file.sheetName,
         totalVolume,
@@ -364,7 +367,11 @@ export const downloadExcelFile = (
       Volume: row.Volume,
       Source: file.sheetName
     }))
-  ).sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
+  ).sort((a, b) => {
+    const volumeA = typeof a.Volume === 'string' ? parseInt(a.Volume, 10) : (a.Volume as number);
+    const volumeB = typeof b.Volume === 'string' ? parseInt(b.Volume, 10) : (b.Volume as number);
+    return (isNaN(volumeB) ? 0 : volumeB) - (isNaN(volumeA) ? 0 : volumeA);
+  });
 
   if (allKeywords.length > 0) {
     const combinedWorksheet = XLSX.utils.json_to_sheet(allKeywords, {

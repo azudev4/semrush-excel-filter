@@ -20,10 +20,22 @@ export const formatData = (
       Object.entries(row).forEach(([key, value]) => {
         if (!COLUMNS_TO_EXCLUDE.includes(key)) {
           if (key === 'Volume') {
-            const volumeValue = typeof value === 'string' ? parseInt(value.replace(/,/g, ''), 10) : value;
+            let volumeValue: number;
+            if (typeof value === 'string') {
+              // Handle string values that might contain commas or other formatting
+              volumeValue = parseInt(value.replace(/[,\s]/g, ''), 10);
+            } else if (typeof value === 'number') {
+              volumeValue = value;
+            } else {
+              volumeValue = 0;
+            }
+            
             if (!isNaN(volumeValue) && volumeValue >= minVolume) {
               newRow[key] = volumeValue;
             }
+          } else if (key === 'Intent') {
+            // Ensure Intent values are preserved as strings
+            newRow[key] = value ? String(value).trim() : '';
           } else {
             newRow[key] = value;
           }
@@ -31,5 +43,10 @@ export const formatData = (
       });
       return newRow;
     })
-    .filter(row => Object.keys(row).length > 0);
+    .filter(row => 
+      Object.keys(row).length > 0 && 
+      // Only keep rows that have both Volume and Intent
+      (row.Volume !== undefined && row.Volume !== null) &&
+      (row.Intent !== undefined && row.Intent !== '')
+    );
 }; 

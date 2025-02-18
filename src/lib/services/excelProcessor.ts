@@ -58,7 +58,7 @@ export const processExcelFile = async (
         
         try {
           jsonData = XLSX.utils.sheet_to_json(worksheet, {
-            raw: false,
+            raw: true,
             dateNF: 'yyyy-mm-dd',
             defval: '',
             blankrows: false,

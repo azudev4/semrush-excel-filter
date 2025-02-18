@@ -105,7 +105,7 @@ yarn dev
    - Each file will be in its own sheet
    - Optional summary sheet with total volumes and hyperlinks to individual sheets
    - "All Keywords" sheet containing combined data from all processed files
-   - Easy navigation between sheets using hyperlinks in the summary sheet
+
 
 ## Data Processing Rules
 

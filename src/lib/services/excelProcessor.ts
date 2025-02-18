@@ -217,6 +217,7 @@ export const downloadExcelFile = (
   const workbook = XLSX.utils.book_new();
   const { headerStyle, cellStyle, alternateRowStyle } = defaultStyles;
 
+  // First add summary sheet if enabled
   if (includeSummarySheet) {
     const sheetSummaries = files.map(file => {
       const totalVolume = file.filteredData.reduce((sum, row) => sum + (row.Volume || 0), 0);
@@ -232,7 +233,13 @@ export const downloadExcelFile = (
     const summaryData = [
       ['Sheet Name', 'Number of Keywords', 'Total Search Volume'],
       ...sheetSummaries.map(summary => [
-        summary.sheetName,
+        { 
+          v: summary.sheetName,
+          l: { 
+            Target: `#'${summary.sheetName}'!A1`,
+            Tooltip: `Go to ${summary.sheetName} sheet`
+          }
+        },
         summary.keywordCount,
         summary.totalVolume
       ]),
@@ -243,6 +250,42 @@ export const downloadExcelFile = (
     ];
 
     const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
+    
+    // Add hyperlink styling after sheet creation
+    sheetSummaries.forEach((_, index) => {
+      const cellRef = XLSX.utils.encode_cell({ r: index + 1, c: 0 });
+      if (summaryWorksheet[cellRef]) {
+        summaryWorksheet[cellRef].s = {
+          font: {
+            name: 'Calibri',
+            sz: 11,
+            underline: true,
+            color: { rgb: "0B5394" },  // Darker blue-green color
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "B0B0B0" } },
+            bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+            left: { style: "thin", color: { rgb: "B0B0B0" } },
+            right: { style: "thin", color: { rgb: "B0B0B0" } }
+          },
+          alignment: {
+            horizontal: "left",
+            vertical: "center"
+          }
+        };
+
+        // Add the visited color state
+        summaryWorksheet[cellRef].s2 = {
+          font: {
+            name: 'Calibri',
+            sz: 11,
+            underline: true,
+            color: { theme: 11 },  // Use Excel's built-in visited hyperlink theme color
+          }
+        };
+      }
+    });
+
     summaryWorksheet['!cols'] = [
       { wch: 30 },
       { wch: 20 },
@@ -282,9 +325,25 @@ export const downloadExcelFile = (
             }
           };
         } else {
-          cell.s = R % 2 === 1 
-            ? { ...cellStyle, ...alternateRowStyle }
-            : cellStyle;
+          // Preserve hyperlink styling for the first column
+          if (C === 0 && cell.l) {
+            cell.s = {
+              font: {
+                color: { rgb: "0B5394" },  // Same darker blue-green color
+                underline: true
+              },
+              border: cellStyle.border,
+              alignment: {
+                horizontal: "left",
+                vertical: "center"
+              },
+              ...(R % 2 === 1 ? { fill: alternateRowStyle.fill } : {})
+            };
+          } else {
+            cell.s = R % 2 === 1 
+              ? { ...cellStyle, ...alternateRowStyle }
+              : cellStyle;
+          }
         }
 
         if (C === 1 || C === 2) {
@@ -297,6 +356,75 @@ export const downloadExcelFile = (
     XLSX.utils.book_append_sheet(workbook, summaryWorksheet, '📊 Summary');
   }
 
+  // Then add combined keywords sheet
+  const allKeywords = files.flatMap(file => 
+    file.filteredData.map(row => ({
+      Keyword: row.Keyword,
+      Intent: row.Intent,
+      Volume: row.Volume,
+      Source: file.sheetName
+    }))
+  ).sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
+
+  if (allKeywords.length > 0) {
+    const combinedWorksheet = XLSX.utils.json_to_sheet(allKeywords, {
+      header: ['Keyword', 'Intent', 'Volume', 'Source']
+    });
+
+    const columnWidths = [
+      { wch: 40 }, // Keyword
+      { wch: 25 }, // Intent
+      { wch: 10 }, // Volume
+      { wch: 30 }, // Source
+    ];
+
+    const range = XLSX.utils.decode_range(combinedWorksheet['!ref'] || 'A1:D1');
+    
+    // Add autofilter to enable filtering
+    combinedWorksheet['!autofilter'] = { ref: combinedWorksheet['!ref'] || 'A1:D1' };
+    
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
+        
+        if (!combinedWorksheet[cell_ref]) {
+          combinedWorksheet[cell_ref] = { v: '', s: cellStyle };
+          continue;
+        }
+
+        const cell = combinedWorksheet[cell_ref];
+        
+        if (R === 0) {
+          cell.s = {
+            ...headerStyle,
+            alignment: {
+              ...headerStyle.alignment,
+              readingOrder: 2,
+              vertical: "center",
+              horizontal: "center",
+              wrapText: true
+            }
+          };
+        } else {
+          const baseStyle = cellStyle;
+          cell.s = R % 2 === 1 
+            ? { ...baseStyle, ...alternateRowStyle }
+            : { ...baseStyle };
+          
+          if (C === 2) { // Volume column
+            cell.z = '#,##0';
+          }
+        }
+      }
+    }
+
+    combinedWorksheet['!cols'] = columnWidths;
+    combinedWorksheet['!rows'] = Array(range.e.r + 1).fill({ hpt: 20 });
+
+    XLSX.utils.book_append_sheet(workbook, combinedWorksheet, '🔍 All Keywords');
+  }
+
+  // Finally add individual sheets
   files.forEach(file => {
     const worksheet = XLSX.utils.json_to_sheet(file.filteredData, {
       header: ['Keyword', 'Intent', 'Volume']

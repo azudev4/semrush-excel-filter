@@ -1,9 +1,8 @@
-import ExcelFilterApp from "@/components/ExcelFilterApp";
-
+import ExcelFilterApp from "@/components/container/ExcelFilterApp";
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <main>
       <ExcelFilterApp />
-    </div>
+    </main>
   );
 }

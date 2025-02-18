@@ -1,3 +1,5 @@
+import type { InputHTMLAttributes } from 'react';
+
 export const DEFAULT_STORES = [
   'lacoste', 'zalando', 'asos', 'amazon', 'farfetch', 'mytheresa',
   'net-a-porter', 'matchesfashion', 'ssense', 'nordstrom', 'shopbop',
@@ -9,6 +11,7 @@ export const DEFAULT_STORES = [
   'spartoo', 'about you', 'boozt', 'breuninger'
 ];
 
+export const ACCEPTED_FILE_TYPES = ['.xlsx', '.xls', '.csv'] as const;
 export const COLUMNS_TO_EXCLUDE = ['CPC (USD)', 'SERP Features', 'Keyword Difficulty'];
 export const DEFAULT_MIN_VOLUME = 100;
 
@@ -24,7 +27,7 @@ export interface FileData {
   volumeFilteredRows: number;
 }
 
-export interface ExtendedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface ExtendedInputProps extends InputHTMLAttributes<HTMLInputElement> {
   webkitdirectory?: string;
   directory?: string;
 } 

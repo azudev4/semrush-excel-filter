@@ -22,6 +22,7 @@ import {
 import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
 import { formatSheetName } from '@/lib/excel';
 import { processExcelFile, downloadExcelFile } from '@/lib/services/excelProcessor';
+import { Github, Linkedin } from 'lucide-react';
 
 const ExcelFilterApp = () => {
   const [defaultShops, setDefaultShops] = useState<string[]>(DEFAULT_STORES);
@@ -141,8 +142,34 @@ const ExcelFilterApp = () => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+
+            <div className="mt-8 pt-4 border-t border-[#004526]/10 text-sm text-gray-500">
+              <p>
+                Dear Lacoste Team, need help or have suggestions? Contact me on{' '}
+                <a 
+                  href="https://www.linkedin.com/in/anthony-decat-bb8138220/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#004526] hover:underline"
+                >
+                  LinkedIn
+                </a>
+                {' '}or{' '}
+                <a 
+                  href="https://github.com/azudev4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#004526] hover:underline"
+                >
+                  GitHub
+                </a>
+              </p>
+            </div>
           </CardContent>
         </Card>
+        <p className="text-xs text-gray-500 text-center">
+          Made with ♥️ for Lacoste SEO Team
+        </p>
       </div>
     </div>
   );

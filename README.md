@@ -1,6 +1,6 @@
 # Lacoste Semrush Excel Filter App
 
-A Next.js application designed to process and filter Semrush keyword data exports, specifically tailored for Lacoste's e-commerce SEO needs. This tool helps clean up keyword data by removing competitor-related terms and low-volume keywords while providing a clean, formatted Excel output.
+A Next.js application designed to process and filter Semrush keyword suggestion exports, specifically tailored for Lacoste's e-commerce SEO needs. This tool helps clean up keyword suggestion data by removing competitor-related terms and low-volume keywords while providing a clean, formatted Excel output.
 
 ## Features
 
@@ -13,7 +13,7 @@ A Next.js application designed to process and filter Semrush keyword data export
 - **Advanced Filtering**
   - Remove rows containing e-commerce competitor names
   - Filter keywords based on minimum search volume
-  - Pre-configured list of 35+ major e-commerce retailers
+  - Pre-configured list of 89+ major fashion brands and retailers
   - Custom store name filtering
   - Maintains essential columns (Keyword, Intent, Volume)
 
@@ -129,3 +129,41 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with [shadcn/ui](https://ui.shadcn.com/) components
 - Icons from [Lucide](https://lucide.dev/)
 - Excel processing powered by [xlsx-js-style](https://github.com/gitbrent/xlsx-js-style)
+
+## Codebase Structure
+
+The application is organized into several key components and modules:
+
+### Core Configuration (`src/lib/constants.ts`)
+- `DEFAULT_STORES`: List of 89+ competitor brands and retailers to filter out
+- `ACCEPTED_FILE_TYPES`: Supported file formats (.xlsx, .xls, .csv)
+- `COLUMNS_TO_EXCLUDE`: Semrush columns to remove from output
+- `DEFAULT_MIN_VOLUME`: Default minimum search volume threshold
+
+### Excel Processing (`src/lib/services/excelProcessor.ts`)
+- Main logic for processing Excel and CSV files
+- Handles file reading, parsing, and data transformation
+- Manages Excel workbook creation and styling
+- Implements sheet generation and formatting
+
+### Data Formatting (`src/lib/excel.ts`)
+- Functions for formatting sheet names
+- Data filtering and transformation logic
+- Volume parsing and validation
+
+### UI Components (`src/components/excel/`)
+- `FileUpload.tsx`: File upload interface with drag-and-drop
+- `FileList.tsx`: Processed files management
+- `StoreFilters.tsx`: Competitor filter management
+- `VolumeFilter.tsx`: Search volume threshold controls
+- `DownloadSection.tsx`: Export options and controls
+
+### Container Component (`src/components/container/`)
+- `ExcelFilterApp.tsx`: Main application component
+- Manages state and data flow
+- Coordinates between UI components and processing logic
+
+### Styling
+- Uses Tailwind CSS for styling
+- Global styles in `app/globals.css`
+- Lacoste brand color (#004526) theming

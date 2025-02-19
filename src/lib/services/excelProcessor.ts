@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData } from '../constants';
-import { formatData } from '../excel';
+import { FileData, DEFAULT_STORES } from '../constants';
 
 export const processExcelFile = async (
   file: File, 
@@ -96,15 +95,43 @@ export const processExcelFile = async (
           return obj;
         });
 
-        const storeFilteredData = formattedJsonData.filter(row => 
-          !Object.values(row as { [key: string]: unknown }).some(value => 
-            shops.some(shop => 
-              String(value).toLowerCase().includes(shop.toLowerCase())
-            )
-          )
+        // Create shop set for faster lookups
+        const shopSet = new Set(shops.map(shop => shop.toLowerCase()));
+        const defaultShopSet = new Set(shops.slice(0, DEFAULT_STORES.length).map(shop => shop.toLowerCase()));
+        
+        // First filter by volume since it's a simpler numeric comparison
+        const volumeFilteredData = formattedJsonData.filter(row => {
+          if (typeof row.Volume === 'undefined') return false;
+          const volume = typeof row.Volume === 'string' 
+            ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10)
+            : row.Volume as number;
+          return !isNaN(volume) && volume >= minVolume;
+        });
+
+        // Helper function to check if a value contains a shop name
+        const containsShopName = (value: string, shopName: string) => {
+          // Create a regex that matches the shop name as a whole word
+          const regex = new RegExp(`\\b${shopName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return regex.test(value);
+        };
+
+        // Track rows removed by default shops
+        const afterDefaultShops = volumeFilteredData.filter(row => 
+          !Object.values(row).some(value => {
+            const valueStr = String(value).toLowerCase();
+            return Array.from(defaultShopSet).some(shop => containsShopName(valueStr, shop));
+          })
         );
 
-        const fullyFilteredData = formatData(storeFilteredData, minVolume);
+        // Track rows removed by custom shops
+        const fullyFilteredData = afterDefaultShops.filter(row => 
+          !Object.values(row).some(value => {
+            const valueStr = String(value).toLowerCase();
+            return Array.from(shopSet).some(shop => 
+              !defaultShopSet.has(shop) && containsShopName(valueStr, shop)
+            );
+          })
+        );
 
         resolve({
           id: Math.random().toString(36).substr(2, 9),
@@ -114,8 +141,9 @@ export const processExcelFile = async (
           sheetName: sheetName || file.name.split('.')[0],
           originalRows: formattedJsonData.length,
           filteredRows: fullyFilteredData.length,
-          storeFilteredRows: formattedJsonData.length - storeFilteredData.length,
-          volumeFilteredRows: storeFilteredData.length - fullyFilteredData.length
+          storeFilteredRows: volumeFilteredData.length - afterDefaultShops.length,
+          customStoreFilteredRows: afterDefaultShops.length - fullyFilteredData.length,
+          volumeFilteredRows: formattedJsonData.length - volumeFilteredData.length
         });
       } catch (err) {
         const errorMessage = (err as Error).message;

@@ -9,26 +9,39 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { FileData } from '@/lib/constants';
 
 interface FileListProps {
   files: FileData[];
   removeFile: (id: string) => void;
   updateSheetName: (id: string, name: string) => void;
+  clearAllFiles: () => void;
 }
 
 export const FileList: React.FC<FileListProps> = ({
   files,
   removeFile,
   updateSheetName,
+  clearAllFiles,
 }) => {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-4 border-b bg-[#004526]/3">
-          <div className="h-4 w-1 bg-[#004526] rounded-full" />
-          <h4 className="text-sm font-medium">Uploaded Files</h4>
+        <div className="flex items-center justify-between p-4 border-b bg-[#004526]/3">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-1 bg-[#004526] rounded-full" />
+            <h4 className="text-sm font-medium">Uploaded Files</h4>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAllFiles}
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear All
+          </Button>
         </div>
         <Table>
           <TableHeader>

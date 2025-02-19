@@ -17,7 +17,8 @@ import {
   VolumeFilter,
   FileUpload,
   FileList,
-  DownloadSection
+  DownloadSection,
+  DeletedRowsSummary
 } from '@/components/excel';
 import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
 import { formatSheetName } from '@/lib/excel';
@@ -86,6 +87,14 @@ const ExcelFilterApp = () => {
     downloadExcelFile(files, outputFilename, includeSummarySheet);
   };
 
+  const volumeFilterCount = files.reduce((sum, file) => sum + file.volumeFilteredRows, 0);
+  const defaultShopCount = files.reduce((sum, file) => sum + file.storeFilteredRows, 0);
+  const customWordsCount = files.reduce((sum, file) => sum + file.customStoreFilteredRows, 0);
+
+  const clearAllFiles = () => {
+    setFiles([]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -122,6 +131,13 @@ const ExcelFilterApp = () => {
                   files={files}
                   removeFile={removeFile}
                   updateSheetName={updateSheetName}
+                  clearAllFiles={clearAllFiles}
+                />
+
+                <DeletedRowsSummary
+                  volumeFilterCount={volumeFilterCount}
+                  defaultShopCount={defaultShopCount}
+                  customWordsCount={customWordsCount}
                 />
 
                 <DownloadSection

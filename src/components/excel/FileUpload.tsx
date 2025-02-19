@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FolderOpen } from 'lucide-react';
@@ -21,6 +21,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (folderInputRef.current) {
+      folderInputRef.current.setAttribute('webkitdirectory', '');
+      folderInputRef.current.setAttribute('directory', '');
+    }
+  }, []);
 
   const isValidFileType = (filename: string): boolean => {
     return ACCEPTED_FILE_TYPES.some(type => 
@@ -99,13 +107,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleFolderSelect = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('webkitdirectory', '');
-      fileInputRef.current.setAttribute('directory', '');
-      fileInputRef.current.click();
-      // Reset to allow file selection next time
-      fileInputRef.current.removeAttribute('webkitdirectory');
-      fileInputRef.current.removeAttribute('directory');
+    if (folderInputRef.current) {
+      folderInputRef.current.click();
     }
   };
 
@@ -128,6 +131,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 id="file-upload"
                 multiple
               />
+              <input
+                ref={folderInputRef}
+                type="file"
+                className="hidden"
+                accept={ACCEPTED_FILE_TYPES.join(',')}
+                onChange={handleFileUpload}
+                id="folder-upload"
+                multiple
+              />
               <label 
                 htmlFor="file-upload" 
                 className={`
@@ -144,34 +156,32 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 onDragLeave={(e) => handleDrag(e, false)}
                 onDrop={handleDrop}
               >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Upload className="w-8 h-8 text-[#004526]" />
-                    <FolderOpen className="w-8 h-8 text-[#004526]" />
-                  </div>
-                  <p className="mb-2 text-sm text-gray-500">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Excel or CSV files and folders
-                  </p>
-                  <div className="flex items-center gap-2 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
-                    >
-                      Select Files
-                    </button>
-                    <span className="text-xs text-gray-400">or</span>
-                    <button
-                      type="button"
-                      onClick={handleFolderSelect}
-                      className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
-                    >
-                      Choose Folder
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <Upload className="w-8 h-8 text-[#004526]" />
+                  <FolderOpen className="w-8 h-8 text-[#004526]" />
+                </div>
+                <p className="mb-2 text-sm text-gray-500">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500">
+                  Excel or CSV files and folders
+                </p>
+                <div className="flex items-center gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
+                  >
+                    Select Files
+                  </button>
+                  <span className="text-xs text-gray-400">or</span>
+                  <button
+                    type="button"
+                    onClick={handleFolderSelect}
+                    className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
+                  >
+                    Choose Folder
+                  </button>
                 </div>
               </label>
             </div>

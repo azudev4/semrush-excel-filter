@@ -26,6 +26,8 @@ export const StoreFilters: React.FC<StoreFiltersProps> = ({
   const [newShop, setNewShop] = useState('');
   const [showStoresList, setShowStoresList] = useState(false);
   const [showDefaultStores, setShowDefaultStores] = useState(true);
+  const [displayedStores, setDisplayedStores] = useState(20);
+  const STORES_PER_PAGE = 20;
 
   const addShop = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +43,14 @@ export const StoreFilters: React.FC<StoreFiltersProps> = ({
 
   const removeDefaultShop = (shopToRemove: string) => {
     setDefaultShops(defaultShops.filter(shop => shop !== shopToRemove));
+  };
+
+  const loadMoreStores = () => {
+    setDisplayedStores(prev => Math.min(prev + STORES_PER_PAGE, defaultShops.length));
+  };
+
+  const showLessStores = () => {
+    setDisplayedStores(STORES_PER_PAGE);
   };
 
   return (
@@ -106,6 +116,7 @@ export const StoreFilters: React.FC<StoreFiltersProps> = ({
                   setShowDefaultStores(false);
                   setDefaultShops([]);
                   setShowStoresList(false);
+                  setDisplayedStores(STORES_PER_PAGE);
                 }}
                 className="h-6 w-6 hover:text-red-500"
                 aria-label="Remove Famous E-commerce section"
@@ -143,20 +154,46 @@ export const StoreFilters: React.FC<StoreFiltersProps> = ({
         </div>
 
         {showDefaultStores && showStoresList && (
-          <div className="mt-2 pl-4 space-y-1">
-            {defaultShops.map(shop => (
-              <div key={shop} className="flex items-center gap-2 text-sm">
-                <Store className="w-3 h-3" />
-                {shop}
-                <button
-                  onClick={() => removeDefaultShop(shop)}
-                  className="ml-auto hover:text-red-500"
-                  aria-label={`Remove ${shop}`}
-                >
-                  <X className="w-3 h-3" />
-                </button>
+          <div className="mt-4 space-y-4">
+            <div className="pl-4 space-y-1 max-h-[400px] overflow-y-auto border rounded-md p-4">
+              {defaultShops.slice(0, displayedStores).map(shop => (
+                <div key={shop} className="flex items-center gap-2 text-sm">
+                  <Store className="w-3 h-3" />
+                  {shop}
+                  <button
+                    onClick={() => removeDefaultShop(shop)}
+                    className="ml-auto hover:text-red-500"
+                    aria-label={`Remove ${shop}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            {defaultShops.length > STORES_PER_PAGE && (
+              <div className="flex justify-center">
+                {displayedStores < defaultShops.length ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={loadMoreStores}
+                    className="text-xs"
+                  >
+                    Show More Stores
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={showLessStores}
+                    className="text-xs"
+                  >
+                    Show Less
+                  </Button>
+                )}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

@@ -2,10 +2,13 @@ import { COLUMNS_TO_EXCLUDE } from './constants';
 
 export const formatSheetName = (fileName: string): string => {
   const nameWithoutExtension = fileName.split('.')[0];
-  const baseName = nameWithoutExtension.split('_broad')[0]
-    .split('_exact')[0]
-    .split('_phrase')[0];
-  return baseName.split('-')
+  
+  // Get the keyword part before the first underscore
+  const keywordPart = nameWithoutExtension.split('_')[0];
+  
+  // Split the keyword part by hyphens and format each word
+  return keywordPart
+    .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };

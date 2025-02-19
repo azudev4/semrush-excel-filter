@@ -217,6 +217,21 @@ export const downloadExcelFile = (
   const workbook = XLSX.utils.book_new();
   const { headerStyle, cellStyle, alternateRowStyle } = defaultStyles;
 
+  // Track used sheet names to handle duplicates
+  const usedSheetNames = new Set<string>();
+
+  // Function to get unique sheet name
+  const getUniqueSheetName = (baseName: string): string => {
+    let sheetName = baseName;
+    let counter = 1;
+    while (usedSheetNames.has(sheetName)) {
+      sheetName = `${baseName} (${counter})`;
+      counter++;
+    }
+    usedSheetNames.add(sheetName);
+    return sheetName;
+  };
+
   // First add summary sheet if enabled
   if (includeSummarySheet) {
     const sheetSummaries = files.map(file => {
@@ -357,6 +372,7 @@ export const downloadExcelFile = (
 
     summaryWorksheet['!rows'] = Array(range.e.r + 1).fill({ hpt: 20 });
     XLSX.utils.book_append_sheet(workbook, summaryWorksheet, '📊 Summary');
+    usedSheetNames.add('📊 Summary');
   }
 
   // Then add combined keywords sheet
@@ -428,7 +444,7 @@ export const downloadExcelFile = (
     combinedWorksheet['!cols'] = columnWidths;
     combinedWorksheet['!rows'] = Array(range.e.r + 1).fill({ hpt: 20 });
 
-    XLSX.utils.book_append_sheet(workbook, combinedWorksheet, '🔍 All Keywords');
+    XLSX.utils.book_append_sheet(workbook, combinedWorksheet, getUniqueSheetName('All Keywords'));
   }
 
   // Finally add individual sheets
@@ -508,23 +524,9 @@ export const downloadExcelFile = (
     worksheet['!cols'] = columnWidths;
     worksheet['!rows'] = Array(range.e.r + 1).fill({ hpt: 20 });
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, file.sheetName);
+    XLSX.utils.book_append_sheet(workbook, worksheet, getUniqueSheetName(file.sheetName));
   });
 
-  const excelBuffer = XLSX.write(workbook, { 
-    bookType: 'xlsx', 
-    type: 'array',
-    cellStyles: true
-  });
-  
-  const data = new Blob([excelBuffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
-  
-  const url = URL.createObjectURL(data);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${outputFilename.trim() || 'combined_filtered_data'}.xlsx`;
-  link.click();
-  URL.revokeObjectURL(url);
+  // Save the workbook
+  XLSX.writeFile(workbook, `${outputFilename}.xlsx`);
 }; 

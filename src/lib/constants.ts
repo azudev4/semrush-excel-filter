@@ -1235,9 +1235,23 @@ export const DEFAULT_STORES = [
 
 export const ACCEPTED_FILE_TYPES = ['.xlsx', '.xls', '.csv'] as const;
 export const COLUMNS_TO_EXCLUDE = [
+  // CPC Columns (Multiple Currencies)
   'CPC (USD)', 'CPC', 'Cost Per Click (USD)', 'Cost Per Click',
+  'CPC (EUR)', 'Cost Per Click (EUR)',
+  'CPC (GBP)', 'Cost Per Click (GBP)',
+  'CPC (AUD)', 'Cost Per Click (AUD)',
+  'CPC (CAD)', 'Cost Per Click (CAD)',
+  'CPC (JPY)', 'Cost Per Click (JPY)',
+  'CPC (CNY)', 'Cost Per Click (CNY)',
+  'CPC (INR)', 'Cost Per Click (INR)',
+  
+  // SERP Columns
   'SERP Features', 'SERP',
+  
+  // Difficulty Columns
   'Keyword Difficulty', 'KD', 'Difficulty', 'Keyword Difficulty (%)',
+  
+  // Competition Columns  
   'Competition', 'Competitive Density'
 ];
 export const DEFAULT_MIN_VOLUME = 100;

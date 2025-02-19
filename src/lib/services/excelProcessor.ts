@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData, DEFAULT_STORES } from '../constants';
+import { FileData, DEFAULT_STORES, COLUMNS_TO_EXCLUDE } from '../constants';
 
 export const processExcelFile = async (
   file: File, 
@@ -86,11 +86,21 @@ export const processExcelFile = async (
           throw new Error(`MISSING_REQUIRED_COLUMNS:${missingColumns.join(',')}`);
         }
 
+        // Filter out excluded columns from headers
+        const includedHeaders = headers.filter(header => 
+          !COLUMNS_TO_EXCLUDE.some(excludedCol => 
+            header.trim().toLowerCase() === excludedCol.toLowerCase()
+          )
+        );
+
         const dataRows = jsonData.slice(1);
         const formattedJsonData = dataRows.map((row: unknown) => {
           const obj: Record<string, string | number> = {};
-          headers.forEach((header, index) => {
-            obj[header.trim()] = (row as (string | number)[])[index];
+          includedHeaders.forEach((header) => {
+            const index = headers.indexOf(header);
+            if (index !== -1) {
+              obj[header.trim()] = (row as (string | number)[])[index];
+            }
           });
           return obj;
         });

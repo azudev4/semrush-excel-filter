@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FolderOpen } from 'lucide-react';
+import { LargeFileDialog } from './LargeFileDialog';
 
 interface FileUploadProps {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -11,6 +12,7 @@ interface FileUploadProps {
 }
 
 const ACCEPTED_FILE_TYPES = ['.xlsx', '.xls', '.csv'];
+const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB threshold
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   handleFileUpload,
@@ -19,6 +21,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   processing,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [showLargeFileDialog, setShowLargeFileDialog] = useState(false);
+  const [totalFileSize, setTotalFileSize] = useState(0);
   const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -30,10 +34,28 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (!processing && showLargeFileDialog) {
+      setShowLargeFileDialog(false);
+    }
+  }, [processing, showLargeFileDialog]);
+
   const isValidFileType = (filename: string): boolean => {
     return ACCEPTED_FILE_TYPES.some(type => 
       filename.toLowerCase().endsWith(type)
     );
+  };
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    
+    if (totalSize > LARGE_FILE_THRESHOLD) {
+      setTotalFileSize(totalSize);
+      setShowLargeFileDialog(true);
+    }
+    
+    handleFileUpload(e);
   };
 
   const handleDrag = (e: React.DragEvent<HTMLLabelElement>, entering: boolean) => {
@@ -93,6 +115,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     if (allFiles.length > 0) {
+      const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
+      if (totalSize > LARGE_FILE_THRESHOLD) {
+        setTotalFileSize(totalSize);
+        setShowLargeFileDialog(true);
+      }
+
       const dataTransfer = new DataTransfer();
       allFiles.forEach(file => dataTransfer.items.add(file));
       
@@ -114,6 +142,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div className="border-t pt-6">
+      <LargeFileDialog 
+        isOpen={showLargeFileDialog} 
+        onOpenChange={setShowLargeFileDialog}
+        totalSize={totalFileSize}
+        processing={processing}
+      />
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <div className="h-6 w-1 bg-[#004526] rounded-full" />
@@ -127,7 +161,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 type="file"
                 className="hidden"
                 accept={ACCEPTED_FILE_TYPES.join(',')}
-                onChange={handleFileUpload}
+                onChange={handleFiles}
                 id="file-upload"
                 multiple
               />
@@ -136,7 +170,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 type="file"
                 className="hidden"
                 accept={ACCEPTED_FILE_TYPES.join(',')}
-                onChange={handleFileUpload}
+                onChange={handleFiles}
                 id="folder-upload"
                 multiple
               />

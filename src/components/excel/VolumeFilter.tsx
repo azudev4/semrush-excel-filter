@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,24 @@ export const VolumeFilter: React.FC<VolumeFilterProps> = ({
   minVolume,
   setMinVolume,
 }) => {
+  const [inputValue, setInputValue] = useState(minVolume.toString());
+
+  useEffect(() => {
+    setInputValue(minVolume.toString());
+  }, [minVolume]);
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 0) {
-      setMinVolume(value);
+    const value = e.target.value;
+    setInputValue(value);
+    
+    if (value === '') {
+      setMinVolume(0);
+      return;
+    }
+
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setMinVolume(numValue);
     }
   };
 
@@ -54,7 +68,7 @@ export const VolumeFilter: React.FC<VolumeFilterProps> = ({
           <Input
             type="number"
             min="0"
-            value={minVolume}
+            value={inputValue}
             onChange={handleVolumeChange}
             className="w-32 focus-visible:ring-[#004526]"
             placeholder="Min Volume"

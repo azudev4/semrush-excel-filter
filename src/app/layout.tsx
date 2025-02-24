@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { MainNav } from "@/components/navigation/MainNav";
+import './globals.css'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,20 +14,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Semrush Excel Filter",
-  description: "Excel file processor for filtering Semrush data based on store names and volume metrics",
+  title: "Lacoste SEO Tools",
+  description: "A collection of tools for Lacoste's SEO team",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
+        <MainNav />
         {children}
       </body>
     </html>

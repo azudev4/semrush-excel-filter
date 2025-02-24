@@ -13,29 +13,24 @@ import {
   AlertTitle,
 } from '@/components/ui/alert';
 import { 
-  StoreFilters,
-  VolumeFilter,
   FileUpload,
   FileList,
   DownloadSection,
-  DeletedRowsSummary
 } from '@/components/excel';
-import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
-import { formatSheetName } from '@/lib/excel';
-import { processExcelFile, downloadExcelFile } from '@/lib/services/excelProcessor';
+import { VolumeFilter } from '@/components/excel';
+import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
+import { Input } from '@/components/ui/input';
+import { FileData } from '@/lib/constants';
 
-const ExcelFilterApp = () => {
-  const [defaultShops, setDefaultShops] = useState<string[]>(DEFAULT_STORES);
-  const [customShops, setCustomShops] = useState<string[]>([]);
+const KwRelevancyApp = () => {
+  const [mainKeyword, setMainKeyword] = useState('');
+  const [minVolume, setMinVolume] = useState(10);
+  const [files, setFiles] = useState<FileData[]>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [files, setFiles] = useState<FileData[]>([]);
   const [currentSheetName, setCurrentSheetName] = useState('');
-  const [minVolume, setMinVolume] = useState(DEFAULT_MIN_VOLUME);
-  const [outputFilename, setOutputFilename] = useState('combined_filtered_data');
+  const [outputFilename, setOutputFilename] = useState('kw_relevancy_analysis');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
-
-  const shops = [...defaultShops, ...customShops];
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -57,14 +52,18 @@ const ExcelFilterApp = () => {
       }
 
       const processedFiles = await Promise.all(
-        validFiles.map(async (file) => {
-          const sheetName = formatSheetName(file.name);
-          return processExcelFile(file, sheetName, shops, minVolume);
+        validFiles.map(async file => {
+          const processed = await processKwRelevancyFile(file, file.name.split('.')[0], minVolume);
+          return {
+            ...processed,
+            storeFilteredRows: 0,
+            customStoreFilteredRows: 0
+          };
         })
       );
 
       setFiles(prev => [...prev, ...processedFiles]);
-      setCurrentSheetName('');
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error processing files.');
     } finally {
@@ -83,16 +82,12 @@ const ExcelFilterApp = () => {
     ));
   };
 
-  const handleDownload = () => {
-    downloadExcelFile(files, outputFilename, includeSummarySheet);
-  };
-
-  const volumeFilterCount = files.reduce((sum, file) => sum + file.volumeFilteredRows, 0);
-  const defaultShopCount = files.reduce((sum, file) => sum + file.storeFilteredRows, 0);
-  const customWordsCount = files.reduce((sum, file) => sum + file.customStoreFilteredRows, 0);
-
   const clearAllFiles = () => {
     setFiles([]);
+  };
+
+  const handleDownload = () => {
+    generateKwRelevancyReport(files, outputFilename, mainKeyword);
   };
 
   return (
@@ -100,18 +95,24 @@ const ExcelFilterApp = () => {
       <div className="max-w-3xl mx-auto space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Lacoste Semrush Excel Filters & Formatting</CardTitle>
+            <CardTitle>Keyword Relevancy Analysis</CardTitle>
             <CardDescription>
-              Remove rows containing e-commerce store names, filter low volume keywords, and combine files into one workbook
+              Upload Semrush exports for each competitor to analyze keyword overlap and identify opportunities
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <StoreFilters
-              defaultShops={defaultShops}
-              setDefaultShops={setDefaultShops}
-              customShops={customShops}
-              setCustomShops={setCustomShops}
-            />
+          <CardContent className="space-y-6">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Main Keyword
+              </label>
+              <Input
+                type="text"
+                value={mainKeyword}
+                onChange={(e) => setMainKeyword(e.target.value)}
+                placeholder="Enter the main keyword you're analyzing competitors for"
+                className="w-full focus-visible:ring-[#004526]"
+              />
+            </div>
 
             <VolumeFilter
               minVolume={minVolume}
@@ -124,7 +125,7 @@ const ExcelFilterApp = () => {
             />
 
             <div className={`
-              transition-all duration-300 ease-in-out
+              transition-all duration-300 ease-in-out space-y-8
               ${files.length > 0 ? 'opacity-100 max-h-[2000px]' : 'opacity-0 max-h-0 overflow-hidden'}
             `}>
               <FileList
@@ -132,12 +133,6 @@ const ExcelFilterApp = () => {
                 removeFile={removeFile}
                 updateSheetName={updateSheetName}
                 clearAllFiles={clearAllFiles}
-              />
-
-              <DeletedRowsSummary
-                volumeFilterCount={volumeFilterCount}
-                defaultShopCount={defaultShopCount}
-                customWordsCount={customWordsCount}
               />
 
               <DownloadSection
@@ -191,4 +186,4 @@ const ExcelFilterApp = () => {
   );
 };
 
-export default ExcelFilterApp;
+export default KwRelevancyApp; 

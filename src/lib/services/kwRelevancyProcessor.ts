@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
+import { parseVolume, filterByVolume } from '../excel';
 
 interface KeywordOccurrence {
   keyword: string;
@@ -52,7 +53,6 @@ export const processKwRelevancyFile = async (
       try {
         if (!event.target?.result) throw new Error('FILE_EMPTY');
 
-        // 1. Read file and get raw data
         let workbook;
         if (file.name.toLowerCase().endsWith('.csv')) {
           workbook = XLSX.read(event.target.result as string, { type: 'string' });
@@ -65,22 +65,16 @@ export const processKwRelevancyFile = async (
 
         if (!rawData.length) throw new Error('EMPTY_SHEET');
 
-        // 2. Keep only required columns
-        const cleanData = (rawData as RawDataRow[]).map(row => {
-          const volume = typeof row['Search Volume'] === 'string' 
-            ? parseInt(row['Search Volume'].replace(/[,\s]/g, ''), 10) || 0
-            : row['Search Volume'] || 0;
+        // Use parseVolume utility for volume parsing
+        const cleanData = (rawData as RawDataRow[]).map(row => ({
+          Keyword: row.Keyword || '',
+          Position: row.Position || '',
+          Volume: parseVolume(row['Search Volume']),
+          Type: row['Position Type'] || ''
+        }));
 
-          return {
-            Keyword: row.Keyword || '',
-            Position: row.Position || '',
-            Volume: volume,
-            Type: row['Position Type'] || ''
-          };
-        });
-
-        // 3. Filter by volume
-        const filteredData = cleanData.filter(row => row.Volume >= minVolume);
+        // Use filterByVolume utility
+        const filteredData = filterByVolume(cleanData, minVolume, 'Volume');
 
         resolve({
           id: crypto.randomUUID(),

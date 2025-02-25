@@ -1,6 +1,16 @@
 import { COLUMNS_TO_EXCLUDE } from './constants';
+import { FilteredDataRow } from './constants';
 
+/**
+ * Formats a filename into a clean sheet name.
+ * Takes the part before the first underscore, splits by hyphens,
+ * and capitalizes each word.
+ * 
+ * @param fileName The original file name
+ * @returns A formatted sheet name
+ */
 export const formatSheetName = (fileName: string): string => {
+  // Get the part before file extension
   const nameWithoutExtension = fileName.split('.')[0];
   
   // Get the keyword part before the first underscore
@@ -13,43 +23,62 @@ export const formatSheetName = (fileName: string): string => {
     .join(' ');
 };
 
+/**
+ * Formats and filters data based on volume and exclusion criteria.
+ * Removes columns in COLUMNS_TO_EXCLUDE.
+ * Filters out rows with Volume below minVolume.
+ * Ensures rows have both Volume and Intent fields.
+ * 
+ * @param data Raw data from Excel/CSV
+ * @param minVolume Minimum volume threshold
+ * @returns Filtered and formatted data
+ */
 export const formatData = (
   data: Record<string, string | number>[],
   minVolume: number
-): Record<string, string | number>[] => {
+): FilteredDataRow[] => {
   return data
-    .map(row => {
-      const newRow: Record<string, string | number> = {};
-      Object.entries(row).forEach(([key, value]) => {
-        if (!COLUMNS_TO_EXCLUDE.includes(key)) {
-          if (key === 'Volume') {
-            let volumeValue: number;
-            if (typeof value === 'string') {
-              // Handle string values that might contain commas or other formatting
-              volumeValue = parseInt(value.replace(/[,\s]/g, ''), 10);
-            } else if (typeof value === 'number') {
-              volumeValue = value;
-            } else {
-              volumeValue = 0;
-            }
-            
-            if (!isNaN(volumeValue) && volumeValue >= minVolume) {
-              newRow[key] = volumeValue;
-            }
-          } else if (key === 'Intent') {
-            // Ensure Intent values are preserved as strings
-            newRow[key] = value ? String(value).trim() : '';
-          } else {
-            newRow[key] = value;
-          }
-        }
-      });
-      return newRow;
-    })
-    .filter(row => 
-      Object.keys(row).length > 0 && 
-      // Only keep rows that have both Volume and Intent
-      (row.Volume !== undefined && row.Volume !== null) &&
-      (row.Intent !== undefined && row.Intent !== '')
-    );
-}; 
+    .map(row => ({
+      Keyword: String(row.Keyword || ''),
+      Position: String(row.Position || ''),
+      Volume: typeof row.Volume === 'string' ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10) || 0 : (row.Volume as number) || 0,
+      Type: String(row.Type || ''),
+      Intent: String(row.Intent || '')
+    }))
+    .filter(row => row.Volume >= minVolume && row.Intent !== '');
+};
+
+/**
+ * Parses and normalizes volume values from different formats
+ * 
+ * @param value Volume value which could be string or number
+ * @returns Normalized volume as a number
+ */
+export const parseVolume = (value: string | number): number => {
+  if (typeof value === 'string') {
+    // Handle string values that might contain commas or other formatting
+    return parseInt(value.replace(/[,\s]/g, ''), 10) || 0;
+  } else if (typeof value === 'number') {
+    return value;
+  }
+  return 0;
+};
+
+/**
+ * Filters data based on minimum volume threshold
+ * 
+ * @param data Array of data objects
+ * @param minVolume Minimum volume threshold
+ * @param volumeKey Key/property name that contains the volume value
+ * @returns Filtered data array
+ */
+export const filterByVolume = <T extends Record<string, any>>(
+  data: T[], 
+  minVolume: number,
+  volumeKey: string = 'Volume'
+): T[] => {
+  return data.filter(row => {
+    const volume = parseVolume(row[volumeKey]);
+    return !isNaN(volume) && volume >= minVolume;
+  });
+};

@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData, DEFAULT_STORES } from '../constants';
+import { FileData, DEFAULT_STORES, FilteredDataRow } from '../constants';
+import { formatData, parseVolume, filterByVolume } from '../excel';
 
 export const processExcelFile = async (
   file: File, 
@@ -87,34 +88,24 @@ export const processExcelFile = async (
         }
 
         const dataRows = jsonData.slice(1);
-        const formattedJsonData = dataRows.map((row: unknown) => {
+        const rowObjects = dataRows.map(row => {
           const rowArray = row as (string | number)[];
-          const volume = typeof rowArray[headers.indexOf('Volume')] === 'string'
-            ? parseInt(rowArray[headers.indexOf('Volume')].toString().replace(/[,\s]/g, ''), 10) || 0
-            : rowArray[headers.indexOf('Volume')] as number || 0;
-
-          return {
-            Keyword: rowArray[headers.indexOf('Keyword')]?.toString() || '',
-            Position: rowArray[headers.indexOf('Position')]?.toString() || '',
-            Volume: volume,
-            Type: rowArray[headers.indexOf('Type')]?.toString() || '',
-            Intent: rowArray[headers.indexOf('Intent')]?.toString()
-          };
+          return headers.reduce((obj, header, index) => {
+            obj[header] = rowArray[index] || '';
+            return obj;
+          }, {} as Record<string, string | number>);
         });
+        const formattedJsonData = formatData(rowObjects, minVolume) as FilteredDataRow[];
 
         // Create shop set for faster lookups
         const shopSet = new Set(shops.map(shop => shop.toLowerCase()));
         const defaultShopSet = new Set(shops.slice(0, DEFAULT_STORES.length).map(shop => shop.toLowerCase()));
         
-        // First filter by volume since it's a simpler numeric comparison
-        const volumeFilteredData = formattedJsonData.filter(row => {
-          const volume = row.Volume; // Volume is already a number from formattedJsonData
-          return !isNaN(volume) && volume >= minVolume;
-        });
+        // Use filterByVolume utility
+        const volumeFilteredData = filterByVolume(formattedJsonData, minVolume);
 
         // Helper function to check if a value contains a shop name
         const containsShopName = (value: string, shopName: string) => {
-          // Create a regex that matches the shop name as a whole word
           const regex = new RegExp(`\\b${shopName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           return regex.test(value);
         };

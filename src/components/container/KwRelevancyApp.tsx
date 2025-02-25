@@ -21,13 +21,13 @@ import {
 import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
 import { Input } from '@/components/ui/input';
-import { FileData } from '@/lib/constants';
+import { FileData, DEFAULT_MIN_VOLUME } from '@/lib/constants';
 import { ToolIntro } from '@/components/common/ToolIntro';
 import { BarChart3 } from 'lucide-react';
 
 const KwRelevancyApp = () => {
   const [mainKeyword, setMainKeyword] = useState('');
-  const [minVolume, setMinVolume] = useState(10);
+  const [minVolume, setMinVolume] = useState(DEFAULT_MIN_VOLUME);
   const [files, setFiles] = useState<FileData[]>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);

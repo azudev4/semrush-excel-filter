@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
 import { parseVolume, filterByVolume } from '../excel';
+import { DEFAULT_MIN_VOLUME } from '@/lib/constants';
 
 interface KeywordOccurrence {
   keyword: string;
@@ -44,7 +45,7 @@ export interface ProcessedData {
 export const processKwRelevancyFile = async (
   file: File,
   sheetName: string,
-  minVolume: number
+  minVolume: number = DEFAULT_MIN_VOLUME
 ): Promise<ProcessedData> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

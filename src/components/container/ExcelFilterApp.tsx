@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
   CardHeader, 
+  CardDescription, 
   CardTitle 
 } from '@/components/ui/card';
 import { 
@@ -23,6 +23,8 @@ import {
 import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
 import { formatSheetName } from '@/lib/excel';
 import { processExcelFile, downloadExcelFile } from '@/lib/services/excelProcessor';
+import { ToolIntro } from '@/components/common/ToolIntro';
+import { FileSpreadsheet } from 'lucide-react';
 
 const ExcelFilterApp = () => {
   const [defaultShops, setDefaultShops] = useState<string[]>(DEFAULT_STORES);
@@ -96,14 +98,14 @@ const ExcelFilterApp = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-8 pt-20">
       <div className="max-w-3xl mx-auto space-y-6">
+        <ToolIntro 
+          title="Lacoste Semrush Excel Filters & Formatting"
+          description="Remove e-commerce store names, filter by search volume, and format your keyword data into a single, professionally-styled Excel workbook for easier analysis."
+          icon={<FileSpreadsheet className="w-6 h-6 text-[#004526]" />}
+        />
+        
         <Card>
-          <CardHeader>
-            <CardTitle>Lacoste Semrush Excel Filters & Formatting</CardTitle>
-            <CardDescription>
-              Remove rows containing e-commerce store names, filter low volume keywords, and combine files into one workbook
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <StoreFilters
               defaultShops={defaultShops}
               setDefaultShops={setDefaultShops}

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Card, 
-  CardContent, 
+  CardContent,
   CardDescription, 
   CardHeader, 
   CardTitle 
@@ -22,6 +22,8 @@ import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
 import { Input } from '@/components/ui/input';
 import { FileData } from '@/lib/constants';
+import { ToolIntro } from '@/components/common/ToolIntro';
+import { BarChart3 } from 'lucide-react';
 
 const KwRelevancyApp = () => {
   const [mainKeyword, setMainKeyword] = useState('');
@@ -109,14 +111,14 @@ const KwRelevancyApp = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-8 pt-20">
       <div className="max-w-3xl mx-auto space-y-6">
+        <ToolIntro 
+          title="Keyword Relevancy Analysis"
+          description="Upload Semrush exports for each competitor to identify keyword overlaps, gaps, and opportunities. Analyze competitor keyword strategies at a glance."
+          icon={<BarChart3 className="w-6 h-6 text-[#004526]" />}
+        />
+        
         <Card>
-          <CardHeader>
-            <CardTitle>Keyword Relevancy Analysis</CardTitle>
-            <CardDescription>
-              Upload Semrush exports for each competitor to analyze keyword overlap and identify opportunities
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="pt-6 space-y-6">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                 Main Keyword

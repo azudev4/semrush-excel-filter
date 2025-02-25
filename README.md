@@ -111,16 +111,16 @@ yarn dev
 
 ### KSUG Formatter Mode
 
-1. **Upload Files**
+1. **Configure Filters**
+   - Adjust minimum search volume threshold
+   - Add or remove e-commerce store names from the filter list
+   - Add custom store names to filter out
+
+2. **Upload Files**
    - Click the upload area or drag and drop Excel/CSV files
    - Alternatively, select a folder containing multiple files
    - Files will be processed automatically
    - Large files will show a warning dialog
-
-2. **Configure Filters**
-   - Adjust minimum search volume threshold
-   - Add or remove e-commerce store names from the filter list
-   - Add custom store names to filter out
 
 3. **Customize Output**
    - Edit individual sheet names

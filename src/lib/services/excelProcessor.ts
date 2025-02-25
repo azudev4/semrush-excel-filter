@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData, DEFAULT_STORES, COLUMNS_TO_EXCLUDE } from '../constants';
+import { FileData, DEFAULT_STORES } from '../constants';
 
 export const processExcelFile = async (
   file: File, 
@@ -86,23 +86,20 @@ export const processExcelFile = async (
           throw new Error(`MISSING_REQUIRED_COLUMNS:${missingColumns.join(',')}`);
         }
 
-        // Filter out excluded columns from headers
-        const includedHeaders = headers.filter(header => 
-          !COLUMNS_TO_EXCLUDE.some(excludedCol => 
-            header.trim().toLowerCase() === excludedCol.toLowerCase()
-          )
-        );
-
         const dataRows = jsonData.slice(1);
         const formattedJsonData = dataRows.map((row: unknown) => {
-          const obj: Record<string, string | number> = {};
-          includedHeaders.forEach((header) => {
-            const index = headers.indexOf(header);
-            if (index !== -1) {
-              obj[header.trim()] = (row as (string | number)[])[index];
-            }
-          });
-          return obj;
+          const rowArray = row as (string | number)[];
+          const volume = typeof rowArray[headers.indexOf('Volume')] === 'string'
+            ? parseInt(rowArray[headers.indexOf('Volume')].toString().replace(/[,\s]/g, ''), 10) || 0
+            : rowArray[headers.indexOf('Volume')] as number || 0;
+
+          return {
+            Keyword: rowArray[headers.indexOf('Keyword')]?.toString() || '',
+            Position: rowArray[headers.indexOf('Position')]?.toString() || '',
+            Volume: volume,
+            Type: rowArray[headers.indexOf('Type')]?.toString() || '',
+            Intent: rowArray[headers.indexOf('Intent')]?.toString()
+          };
         });
 
         // Create shop set for faster lookups
@@ -111,10 +108,7 @@ export const processExcelFile = async (
         
         // First filter by volume since it's a simpler numeric comparison
         const volumeFilteredData = formattedJsonData.filter(row => {
-          if (typeof row.Volume === 'undefined') return false;
-          const volume = typeof row.Volume === 'string' 
-            ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10)
-            : row.Volume as number;
+          const volume = row.Volume; // Volume is already a number from formattedJsonData
           return !isNaN(volume) && volume >= minVolume;
         });
 

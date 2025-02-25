@@ -28,7 +28,6 @@ const KwRelevancyApp = () => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentSheetName, setCurrentSheetName] = useState('');
   const [outputFilename, setOutputFilename] = useState('kw_relevancy_analysis');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
 

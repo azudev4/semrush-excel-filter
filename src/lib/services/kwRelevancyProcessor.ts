@@ -1,5 +1,4 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData } from '../constants';
 
 interface KeywordOccurrence {
   keyword: string;
@@ -15,6 +14,21 @@ interface KeywordOccurrence {
   }>;
 }
 
+interface RawDataRow {
+  Keyword: string;
+  Position: string | number;
+  'Search Volume': number | string;
+  'Position Type': string;
+  [key: string]: unknown;
+}
+
+interface FilteredDataRow {
+  Keyword: string;
+  Position: string | number;
+  Volume: number;
+  Type: string;
+}
+
 export interface ProcessedData {
   id: string;
   fileName: string;
@@ -22,11 +36,9 @@ export interface ProcessedData {
   originalRows: number;
   filteredRows: number;
   volumeFilteredRows: number;
-  originalData: any[];
-  filteredData: any[];
+  originalData: FilteredDataRow[];
+  filteredData: FilteredDataRow[];
 }
-
-const REQUIRED_COLUMNS = ['Keyword', 'Position', 'Search Volume', 'Position Type'];
 
 export const processKwRelevancyFile = async (
   file: File,
@@ -54,20 +66,21 @@ export const processKwRelevancyFile = async (
         if (!rawData.length) throw new Error('EMPTY_SHEET');
 
         // 2. Keep only required columns
-        const cleanData = rawData.map((row: any) => ({
-          Keyword: row.Keyword || '',
-          Position: row.Position || '',
-          Volume: row['Search Volume'] || 0,
-          Type: row['Position Type'] || ''
-        }));
+        const cleanData = (rawData as RawDataRow[]).map(row => {
+          const volume = typeof row['Search Volume'] === 'string' 
+            ? parseInt(row['Search Volume'].replace(/[,\s]/g, ''), 10) || 0
+            : row['Search Volume'] || 0;
+
+          return {
+            Keyword: row.Keyword || '',
+            Position: row.Position || '',
+            Volume: volume,
+            Type: row['Position Type'] || ''
+          };
+        });
 
         // 3. Filter by volume
-        const filteredData = cleanData.filter(row => {
-          const volume = typeof row.Volume === 'string' 
-            ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10)
-            : row.Volume;
-          return !isNaN(volume) && volume >= minVolume;
-        });
+        const filteredData = cleanData.filter(row => row.Volume >= minVolume);
 
         resolve({
           id: crypto.randomUUID(),
@@ -166,13 +179,12 @@ export const generateKwRelevancyReport = (
   const keywordMap = new Map<string, KeywordOccurrence>();
 
   files.forEach(file => {
-    file.filteredData.forEach((row: any) => {
+    file.filteredData.forEach((row: FilteredDataRow) => {
       const keyword = row.Keyword?.toString().toLowerCase();
       if (!keyword) return;
 
-      const volume = typeof row.Volume === 'string' 
-        ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10)
-        : row.Volume;
+      // Use the already processed Volume field
+      const volume = row.Volume;
 
       if (keywordMap.has(keyword)) {
         const existing = keywordMap.get(keyword)!;

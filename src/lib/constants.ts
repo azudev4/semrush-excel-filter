@@ -1258,8 +1258,8 @@ export const DEFAULT_MIN_VOLUME = 100;
 
 export interface FileData {
   id: string;
-  originalData: Record<string, string | number>[];
-  filteredData: Record<string, string | number>[];
+  originalData: FilteredDataRow[];
+  filteredData: FilteredDataRow[];
   fileName: string;
   sheetName: string;
   originalRows: number;
@@ -1267,6 +1267,14 @@ export interface FileData {
   storeFilteredRows: number;
   volumeFilteredRows: number;
   customStoreFilteredRows: number;
+}
+
+export interface FilteredDataRow {
+  Keyword: string;
+  Position: string | number;
+  Volume: number;
+  Type: string;
+  Intent?: string;
 }
 
 export interface ExtendedInputProps extends InputHTMLAttributes<HTMLInputElement> {

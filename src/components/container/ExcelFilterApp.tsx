@@ -30,7 +30,6 @@ const ExcelFilterApp = () => {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<FileData[]>([]);
-  const [currentSheetName, setCurrentSheetName] = useState('');
   const [minVolume, setMinVolume] = useState(DEFAULT_MIN_VOLUME);
   const [outputFilename, setOutputFilename] = useState('combined_filtered_data');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
@@ -64,7 +63,6 @@ const ExcelFilterApp = () => {
       );
 
       setFiles(prev => [...prev, ...processedFiles]);
-      setCurrentSheetName('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error processing files.');
     } finally {

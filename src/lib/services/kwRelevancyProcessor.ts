@@ -229,16 +229,14 @@ export const generateKwRelevancyReport = (
       return b.totalVolume - a.totalVolume;
     });
 
-  // 3. Create summary sheet with better structure
+  // 3. Create summary sheet with streamlined structure
+  const title = mainKeyword 
+    ? `Keyword Relevancy Analysis: ${mainKeyword}`
+    : 'Keyword Relevancy Analysis';
+
   const summaryData = [
-    ['Keyword Relevancy Analysis'],
-    [],
-    ['Analysis Details'],
-    ['Main Keyword', mainKeyword || 'Not specified'],
-    ['Competitors', files.length.toString()],
-    [],
+    [title],
     ['Top Keyword Opportunities'],
-    ['', '', '', '', '', ''],  // Separator row
     ['Keyword', 'Best Position', 'Total Volume', 'Type', 'Occurrences', 'Details'],
     ...sortedKeywords.map(kw => [
       kw.keyword,
@@ -252,28 +250,10 @@ export const generateKwRelevancyReport = (
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-  // Calculate max width needed for second column (including header and data)
-  const getTextWidth = (text: string | number) => {
-    const str = String(text);
-    return Math.max(
-      str.length * 1.2, // Base width
-      str.length * (str.length > 10 ? 0.8 : 1) // Adjust for long text
-    );
-  };
-
-  const secondColumnWidth = Math.max(
-    getTextWidth('Best Position'),
-    getTextWidth(mainKeyword || 'Not specified'),
-    getTextWidth(files.length.toString()),
-    ...sortedKeywords.map(kw => 
-      getTextWidth(Math.min(...kw.competitors.map(c => Number(c.position) || 999)))
-    )
-  );
-
   // Column widths
   summarySheet['!cols'] = [
     { wch: 45 }, // Keyword
-    { wch: Math.max(15, secondColumnWidth) }, // Best Position/Values - dynamic width
+    { wch: 15 }, // Best Position
     { wch: 15 }, // Volume
     { wch: 15 }, // Type
     { wch: 12 }, // Occurrences
@@ -283,17 +263,12 @@ export const generateKwRelevancyReport = (
   // Row heights
   summarySheet['!rows'] = Array(summaryData.length).fill({ hpt: 20 }); // Default height
   summarySheet['!rows'][0] = { hpt: 35 }; // Title row
-  summarySheet['!rows'][2] = { hpt: 25 }; // Analysis Details header
-  summarySheet['!rows'][6] = { hpt: 25 }; // Opportunities header
-  summarySheet['!rows'][7] = { hpt: 8 }; // Separator row
-  summarySheet['!rows'][8] = { hpt: 25 }; // Column headers row
+  summarySheet['!rows'][1] = { hpt: 25 }; // Opportunities header
 
   // Merge cells for headers and title
   summarySheet['!merges'] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Main title
-    { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }, // Analysis Details header
-    { s: { r: 6, c: 0 }, e: { r: 6, c: 5 } }, // Opportunities header
-    { s: { r: 7, c: 0 }, e: { r: 7, c: 5 } }, // Separator
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Opportunities header
   ];
 
   // Style the sheet
@@ -306,40 +281,39 @@ export const generateKwRelevancyReport = (
 
       const cell = summarySheet[cell_ref];
 
-      if (R === 0 || R === 2 || R === 6) {
-        // Headers style
+      if (R === 0) {
+        // Main title style
         cell.s = {
           font: { 
             bold: true, 
-            size: R === 0 ? 16 : 12, 
-            color: R === 0 ? { rgb: "FFFFFF" } : { rgb: "004526" } 
+            size: 16, 
+            color: { rgb: "FFFFFF" } 
           },
           fill: { 
             patternType: "solid", 
-            fgColor: { rgb: R === 0 ? "004526" : "F0F7F4" } 
+            fgColor: { rgb: "004526" } 
           },
           alignment: { horizontal: "center", vertical: "center" },
           border: {
-            top: { style: "thin", color: { rgb: R === 0 ? "FFFFFF" : "E2E8F0" } },
-            bottom: { style: "thin", color: { rgb: R === 0 ? "FFFFFF" : "E2E8F0" } },
-            left: { style: "thin", color: { rgb: R === 0 ? "FFFFFF" : "E2E8F0" } },
-            right: { style: "thin", color: { rgb: R === 0 ? "FFFFFF" : "E2E8F0" } }
+            top: { style: "thin", color: { rgb: "FFFFFF" } },
+            bottom: { style: "thin", color: { rgb: "FFFFFF" } },
+            left: { style: "thin", color: { rgb: "FFFFFF" } },
+            right: { style: "thin", color: { rgb: "FFFFFF" } }
           }
         };
-      } else if (R >= 3 && R <= 4) {
-        // Analysis details rows
+      } else if (R === 1) {
+        // Opportunities header
         cell.s = {
           font: { 
-            bold: C === 0,
-            size: 11,
-            color: { rgb: C === 0 ? "004526" : "000000" }
+            bold: true, 
+            size: 12, 
+            color: { rgb: "004526" } 
           },
-          fill: { patternType: "solid", fgColor: { rgb: "F8FAFC" } },
-          alignment: { 
-            horizontal: C === 0 ? "right" : "left", 
-            vertical: "center",
-            wrapText: C === 1
+          fill: { 
+            patternType: "solid", 
+            fgColor: { rgb: "F0F7F4" } 
           },
+          alignment: { horizontal: "center", vertical: "center" },
           border: {
             top: { style: "thin", color: { rgb: "E2E8F0" } },
             bottom: { style: "thin", color: { rgb: "E2E8F0" } },
@@ -347,12 +321,7 @@ export const generateKwRelevancyReport = (
             right: { style: "thin", color: { rgb: "E2E8F0" } }
           }
         };
-      } else if (R === 7) {
-        // Separator style
-        cell.s = {
-          fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } },
-        };
-      } else if (R === 8) {
+      } else if (R === 2) {
         // Column headers style
         cell.s = {
           font: { bold: true, color: { rgb: "FFFFFF" } },
@@ -398,4 +367,4 @@ export const generateKwRelevancyReport = (
 
   // Save the workbook
   XLSX.writeFile(workbook, `${outputFilename}.xlsx`);
-}; 
+};

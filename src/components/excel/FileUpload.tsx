@@ -1,4 +1,3 @@
-// src/components/excel/FileUpload.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FolderOpen } from 'lucide-react';
@@ -251,11 +250,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               htmlFor="file-upload" 
               className={`
                 flex flex-col items-center justify-center w-full h-40 px-4 
-                transition bg-white border-2 border-dashed rounded-lg 
+                bg-white border-2 border-dashed rounded-lg 
                 cursor-pointer focus:outline-none
+                transition-all duration-75 ease-out
+                hover:border-[#004526]/40 hover:bg-[#004526]/5 hover:shadow-md
                 ${isDragging 
                   ? 'border-[#004526] border-[3px] bg-[#004526]/10' 
-                  : 'border-[#004526]/20 hover:border-[#004526]/40 hover:bg-[#004526]/5'
+                  : 'border-[#004526]/20'
                 }
               `}
               onDragEnter={(e) => handleDrag(e, true)}
@@ -265,11 +266,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               initial={{ opacity: 0, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              whileHover={{
-                boxShadow: "0 4px 12px rgba(0, 69, 38, 0.1)",
-                borderColor: "rgba(0, 69, 38, 0.4)",
-                backgroundColor: "rgba(0, 69, 38, 0.05)",
-              }}
             >
               <motion.div 
                 className="flex items-center gap-3 mb-3"
@@ -305,7 +301,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
+                  className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium transition-colors duration-75"
                 >
                   Select Files
                 </button>
@@ -313,7 +309,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 <button
                   type="button"
                   onClick={handleFolderSelect}
-                  className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium"
+                  className="text-xs text-[#004526] hover:text-[#004526]/80 font-medium transition-colors duration-75"
                 >
                   Choose Folder
                 </button>

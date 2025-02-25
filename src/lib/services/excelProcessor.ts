@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
 import { FileData, DEFAULT_STORES, FilteredDataRow } from '../constants';
-import { formatData, parseVolume, filterByVolume } from '../excel';
+import { formatData, filterByVolume } from '../excel';
 
 export const processExcelFile = async (
   file: File, 

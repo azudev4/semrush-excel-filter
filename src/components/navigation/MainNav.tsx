@@ -4,19 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { FileSpreadsheet, FileText } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export const MainNav = () => {
   const pathname = usePathname();
   const [prevPath, setPrevPath] = useState(pathname);
-  const [direction, setDirection] = useState(0); // 0: initial, 1: right, -1: left
 
   useEffect(() => {
     if (pathname !== prevPath) {
       if (pathname === '/') {
-        setDirection(-1); // Going left
+        // Going left
       } else {
-        setDirection(1); // Going right
+        // Going right
       }
       setPrevPath(pathname);
     }

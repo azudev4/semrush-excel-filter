@@ -74,7 +74,7 @@ export const processKwRelevancyFile = async (
         }));
 
         // Use filterByVolume utility
-        const filteredData = filterByVolume(cleanData, minVolume, 'Volume');
+        const filteredData = filterByVolume(cleanData, minVolume);
 
         resolve({
           id: crypto.randomUUID(),

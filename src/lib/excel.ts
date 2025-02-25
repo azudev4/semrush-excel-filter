@@ -1,4 +1,3 @@
-import { COLUMNS_TO_EXCLUDE } from './constants';
 import { FilteredDataRow } from './constants';
 
 /**
@@ -66,19 +65,13 @@ export const parseVolume = (value: string | number): number => {
 
 /**
  * Filters data based on minimum volume threshold
- * 
- * @param data Array of data objects
- * @param minVolume Minimum volume threshold
- * @param volumeKey Key/property name that contains the volume value
- * @returns Filtered data array
  */
-export const filterByVolume = <T extends Record<string, any>>(
+export const filterByVolume = <T extends FilteredDataRow>(
   data: T[], 
   minVolume: number,
-  volumeKey: string = 'Volume'
 ): T[] => {
   return data.filter(row => {
-    const volume = parseVolume(row[volumeKey]);
+    const volume = parseVolume(row.Volume);
     return !isNaN(volume) && volume >= minVolume;
   });
 };

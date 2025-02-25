@@ -35,10 +35,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   useEffect(() => {
     if (processing) {
       // Simulate progress for better UX
-      let interval: NodeJS.Timeout;
-      setProgressValue(10);
-      
-      interval = setInterval(() => {
+      const interval = setInterval(() => {
         setProgressValue(prev => {
           // Randomly increase but never reach 100% until complete
           const increment = Math.random() * 15;
@@ -65,7 +62,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         return () => clearTimeout(timeout);
       }
     }
-  }, [processing]);
+  }, [processing, progressValue]);
 
   useEffect(() => {
     if (!processing && showLargeFileDialog) {

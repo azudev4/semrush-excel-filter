@@ -1,6 +1,8 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { MainNav } from "@/components/navigation/MainNav";
+import { MainNav } from "@/components/navigation/MainNav"; // Use the original path
+import { PageTransition } from "@/components/navigation/PageTransition";
 import './globals.css'
 
 const geistSans = Geist({
@@ -27,7 +29,9 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <MainNav />
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </body>
     </html>
   );

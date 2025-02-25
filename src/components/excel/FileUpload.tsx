@@ -1,7 +1,9 @@
+// src/components/excel/FileUpload.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FolderOpen } from 'lucide-react';
 import { LargeFileDialog } from './LargeFileDialog';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileUploadProps {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -18,6 +20,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [showLargeFileDialog, setShowLargeFileDialog] = useState(false);
   const [totalFileSize, setTotalFileSize] = useState(0);
+  const [progressValue, setProgressValue] = useState(0);
   const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +31,41 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       folderInputRef.current.setAttribute('directory', '');
     }
   }, []);
+
+  useEffect(() => {
+    if (processing) {
+      // Simulate progress for better UX
+      let interval: NodeJS.Timeout;
+      setProgressValue(10);
+      
+      interval = setInterval(() => {
+        setProgressValue(prev => {
+          // Randomly increase but never reach 100% until complete
+          const increment = Math.random() * 15;
+          const newValue = prev + increment;
+          return Math.min(newValue, 95);
+        });
+      }, 600);
+      
+      return () => {
+        clearInterval(interval);
+        // Reset to 100 when done
+        setProgressValue(100);
+      };
+    } else {
+      // Make sure it hits 100 when processing is done
+      if (progressValue > 0 && progressValue < 100) {
+        setProgressValue(100);
+        
+        // Reset after animation completes
+        const timeout = setTimeout(() => {
+          setProgressValue(0);
+        }, 1000);
+        
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [processing]);
 
   useEffect(() => {
     if (!processing && showLargeFileDialog) {
@@ -101,10 +139,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       .filter(file => isValidFileType(file.name));
     
     if (droppedFiles.length > 0) {
-      // Log for debugging
-      console.log(`Direct file drop: Found ${droppedFiles.length} valid files`);
-      droppedFiles.forEach(file => console.log(`- ${file.name} (${file.size} bytes)`));
-      
       // Calculate size and show warning if needed
       const totalSize = droppedFiles.reduce((sum, file) => sum + file.size, 0);
       if (totalSize > LARGE_FILE_THRESHOLD) {
@@ -144,8 +178,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       if (allFiles.length > 0) {
-        console.log(`Found ${allFiles.length} valid files in directories`);
-        
         const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
         if (totalSize > LARGE_FILE_THRESHOLD) {
           setTotalFileSize(totalSize);
@@ -176,7 +208,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   return (
-    <div className="border-t pt-6">
+    <motion.div 
+      className="border-t pt-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
       <LargeFileDialog 
         isOpen={showLargeFileDialog} 
         onOpenChange={setShowLargeFileDialog}
@@ -184,10 +221,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         processing={processing}
       />
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
+        <motion.div 
+          className="flex items-center gap-2 mb-4" 
+          initial={{ opacity: 0, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.1 }}
+        >
           <div className="h-6 w-1 bg-[#004526] rounded-full" />
           <h3 className="text-base font-medium">Upload Excel Files</h3>
-        </div>
+        </motion.div>
         <div>
           <div className="relative">
             <input
@@ -208,7 +250,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               id="folder-upload"
               multiple
             />
-            <label 
+            <motion.label 
               htmlFor="file-upload" 
               className={`
                 flex flex-col items-center justify-center w-full h-40 px-4 
@@ -223,18 +265,46 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               onDragOver={(e) => e.preventDefault()}
               onDragLeave={(e) => handleDrag(e, false)}
               onDrop={handleDrop}
+              initial={{ opacity: 0, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              whileHover={{
+                boxShadow: "0 4px 12px rgba(0, 69, 38, 0.1)",
+                borderColor: "rgba(0, 69, 38, 0.4)",
+                backgroundColor: "rgba(0, 69, 38, 0.05)",
+              }}
             >
-              <div className="flex items-center gap-3 mb-3">
+              <motion.div 
+                className="flex items-center gap-3 mb-3"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
                 <Upload className="w-8 h-8 text-[#004526]" />
                 <FolderOpen className="w-8 h-8 text-[#004526]" />
-              </div>
-              <p className="mb-2 text-sm text-gray-500">
+              </motion.div>
+              <motion.p 
+                className="mb-2 text-sm text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
                 <span className="font-semibold">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
+              </motion.p>
+              <motion.p 
+                className="text-xs text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.5 }}
+              >
                 Excel or CSV files and folders
-              </p>
-              <div className="flex items-center gap-2 mt-4">
+              </motion.p>
+              <motion.div 
+                className="flex items-center gap-2 mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.6 }}
+              >
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -250,17 +320,42 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 >
                   Choose Folder
                 </button>
-              </div>
-            </label>
+              </motion.div>
+            </motion.label>
           </div>
-          {processing && (
-            <div className="mt-4 space-y-2">
-              <p className="text-sm text-gray-600">Processing files...</p>
-              <Progress value={33} className="w-full bg-[#004526]/10" />
-            </div>
-          )}
+          
+          <AnimatePresence>
+            {processing && (
+              <motion.div 
+                className="mt-4 space-y-2"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-600">Processing files...</p>
+                  <p className="text-xs text-gray-500">{Math.round(progressValue)}%</p>
+                </div>
+                <div className="relative">
+                  <Progress value={progressValue} className="w-full bg-[#004526]/10" />
+                  <motion.div 
+                    className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{
+                      x: ['-100%', '100%'],
+                      transition: {
+                        repeat: Infinity,
+                        duration: 1.5,
+                        ease: "linear"
+                      }
+                    }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

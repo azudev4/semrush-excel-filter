@@ -16,6 +16,7 @@ import {
   FileUpload,
   FileList,
   DownloadSection,
+  DownloadProgressDialog,
 } from '@/components/excel';
 import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
@@ -30,6 +31,8 @@ const KwRelevancyApp = () => {
   const [error, setError] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState('kw_relevancy_analysis');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -86,8 +89,22 @@ const KwRelevancyApp = () => {
   };
 
   const handleDownload = () => {
-    generateKwRelevancyReport(files, outputFilename, mainKeyword);
+    setIsDownloading(true);
+    setShowDownloadDialog(true);
+    
+    // Use setTimeout to allow the dialog to render before starting the processing
+    setTimeout(() => {
+      generateKwRelevancyReport(files, outputFilename, mainKeyword);
+      setIsDownloading(false);
+    }, 100);
   };
+
+  // Prepare files for display with correct volume filtered count
+  const displayFiles = files.map(file => ({
+    ...file,
+    storeFilteredRows: 0, // No store filtering in KwRelevancy
+    volumeFilteredRows: file.originalRows - file.filteredRows // Calculate filtered rows
+  }));
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-8 pt-20">
@@ -128,7 +145,7 @@ const KwRelevancyApp = () => {
               ${files.length > 0 ? 'opacity-100 max-h-[2000px]' : 'opacity-0 max-h-0 overflow-hidden'}
             `}>
               <FileList
-                files={files}
+                files={displayFiles}
                 removeFile={removeFile}
                 updateSheetName={updateSheetName}
                 clearAllFiles={clearAllFiles}
@@ -181,8 +198,15 @@ const KwRelevancyApp = () => {
           Made with ♥️ for Lacoste SEO Team
         </p>
       </div>
+
+      <DownloadProgressDialog
+        isOpen={showDownloadDialog}
+        onOpenChange={setShowDownloadDialog}
+        processing={isDownloading}
+        fileCount={files.length}
+      />
     </div>
   );
 };
 
-export default KwRelevancyApp; 
+export default KwRelevancyApp;

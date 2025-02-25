@@ -96,36 +96,76 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(false);
     dragCounter.current = 0;
 
-    const items = e.dataTransfer.items;
-    if (!items?.length) return;
-
-    const allFiles: File[] = [];
+    // Check for files directly first (simpler approach)
+    const droppedFiles = Array.from(e.dataTransfer.files || [])
+      .filter(file => isValidFileType(file.name));
     
-    for (const item of Array.from(items)) {
-      const entry = item.webkitGetAsEntry();
-      if (entry) {
-        const files = await processEntry(entry);
-        allFiles.push(...files);
-      }
-    }
-
-    if (allFiles.length > 0) {
-      const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
+    if (droppedFiles.length > 0) {
+      // Log for debugging
+      console.log(`Direct file drop: Found ${droppedFiles.length} valid files`);
+      droppedFiles.forEach(file => console.log(`- ${file.name} (${file.size} bytes)`));
+      
+      // Calculate size and show warning if needed
+      const totalSize = droppedFiles.reduce((sum, file) => sum + file.size, 0);
       if (totalSize > LARGE_FILE_THRESHOLD) {
         setTotalFileSize(totalSize);
         setShowLargeFileDialog(true);
       }
 
-      const dataTransfer = new DataTransfer();
-      allFiles.forEach(file => dataTransfer.items.add(file));
+      // Prepare the files for handling
+      if (fileInputRef.current) {
+        const dt = new DataTransfer();
+        droppedFiles.forEach(file => dt.items.add(file));
+        
+        // Update the file input value
+        fileInputRef.current.files = dt.files;
+        
+        // Call the handler directly with the input element
+        handleFileUpload({
+          target: fileInputRef.current,
+          currentTarget: fileInputRef.current,
+        } as unknown as React.ChangeEvent<HTMLInputElement>);
+      }
+      return;
+    }
+    
+    // If no direct files, try using the entries API for directories
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      const items = Array.from(e.dataTransfer.items);
+      const allFiles: File[] = [];
       
-      const event = {
-        target: {
-          files: dataTransfer.files
+      // Process each item
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) {
+          const entryFiles = await processEntry(entry);
+          allFiles.push(...entryFiles);
         }
-      } as unknown as React.ChangeEvent<HTMLInputElement>;
-      
-      handleFileUpload(event);
+      }
+
+      if (allFiles.length > 0) {
+        console.log(`Found ${allFiles.length} valid files in directories`);
+        
+        const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
+        if (totalSize > LARGE_FILE_THRESHOLD) {
+          setTotalFileSize(totalSize);
+          setShowLargeFileDialog(true);
+        }
+
+        if (fileInputRef.current) {
+          const dt = new DataTransfer();
+          allFiles.forEach(file => dt.items.add(file));
+          
+          // Update the file input value
+          fileInputRef.current.files = dt.files;
+          
+          // Call the handler directly
+          handleFileUpload({
+            target: fileInputRef.current,
+            currentTarget: fileInputRef.current,
+          } as unknown as React.ChangeEvent<HTMLInputElement>);
+        }
+      }
     }
   };
 
@@ -223,4 +263,4 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       </div>
     </div>
   );
-}; 
+};

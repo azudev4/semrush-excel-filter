@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
-import { parseVolume, filterByVolume } from '../excel';
-import { DEFAULT_MIN_VOLUME } from '@/lib/constants';
+import { filterByVolume, formatData } from '../excel';
+import { DEFAULT_MIN_VOLUME, FilteredDataRow, KW_RELEVANCY_COLUMNS } from '@/lib/constants';
 
 interface KeywordOccurrence {
   keyword: string;
@@ -14,13 +14,6 @@ interface KeywordOccurrence {
     position: string | number;
     volume: number;
   }>;
-}
-
-interface FilteredDataRow {
-  Keyword: string;
-  Position: string | number;
-  Volume: number;
-  Type: string;
 }
 
 export interface ProcessedData {
@@ -87,12 +80,19 @@ export const processKwRelevancyFile = async (
         
         for (let i = 0; i < rawData.length; i += chunkSize) {
           const chunk = rawData.slice(i, i + chunkSize);
-          const processedChunk = chunk.map(row => ({
-            Keyword: String((row as Record<string, unknown>)[keywordColumn] || ''),
-            Position: String((row as Record<string, unknown>)[positionColumn] || ''),
-            Volume: parseVolume((row as Record<string, unknown>)[volumeColumn] as string | number),
-            Type: String((row as Record<string, unknown>)[typeColumn] || '')
-          }));
+          
+          // Map raw data to standardized structure with KW_RELEVANCY_COLUMNS
+          const processedChunk = chunk.map(row => {
+            const mappedRow: Record<string, string | number> = {
+              Keyword: String((row as Record<string, unknown>)[keywordColumn] || ''),
+              Position: String((row as Record<string, unknown>)[positionColumn] || ''),
+              Volume: (row as Record<string, unknown>)[volumeColumn] as string | number,
+              Type: String((row as Record<string, unknown>)[typeColumn] || '')
+            };
+            
+            return formatData([mappedRow], KW_RELEVANCY_COLUMNS)[0];
+          });
+          
           cleanData = [...cleanData, ...processedChunk];
         }
 
@@ -174,7 +174,7 @@ export const generateKwRelevancyReport = (
           existing.totalVolume += isNaN(volume) ? 0 : volume;
           existing.competitors.push({
             name: file.sheetName,
-            position: row.Position,
+            position: row.Position || '',
             volume: isNaN(volume) ? 0 : volume
           });
         } else {
@@ -182,20 +182,20 @@ export const generateKwRelevancyReport = (
           const currentPos = Number(row.Position) || 999;
           const existingPos = Number(existing.competitors[competitorIndex].position) || 999;
           if (currentPos < existingPos) {
-            existing.competitors[competitorIndex].position = row.Position;
+            existing.competitors[competitorIndex].position = row.Position || '';
           }
         }
       } else {
         keywordMap.set(keyword, {
           keyword: row.Keyword,
-          position: row.Position,
+          position: row.Position || '',
           volume: isNaN(volume) ? 0 : volume,
           type: row.Type || '',
           occurrences: 1,
           totalVolume: isNaN(volume) ? 0 : volume,
           competitors: [{
             name: file.sheetName,
-            position: row.Position,
+            position: row.Position || '',
             volume: isNaN(volume) ? 0 : volume
           }]
         });

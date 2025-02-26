@@ -1273,13 +1273,17 @@ export interface FileData {
 
 export interface FilteredDataRow {
   Keyword: string;
-  Position: string | number;
+  Position?: string | number;  // Made optional
   Volume: number;
-  Type: string;
-  Intent?: string;
+  Type?: string;              // Made optional
+  Intent?: string;            // Already optional
 }
 
 export interface ExtendedInputProps extends InputHTMLAttributes<HTMLInputElement> {
   webkitdirectory?: string;
   directory?: string;
-} 
+}
+
+// Define column configurations for each tool
+export const KSUG_FORMATTER_COLUMNS = ['Keyword', 'Intent', 'Volume'] as string[];
+export const KW_RELEVANCY_COLUMNS = ['Keyword', 'Position', 'Volume', 'Type'] as string[]; 

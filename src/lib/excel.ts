@@ -1,4 +1,4 @@
-import { FilteredDataRow } from './constants';
+import { FilteredDataRow, KW_RELEVANCY_COLUMNS } from './constants';
 
 /**
  * Formats a filename into a clean sheet name.
@@ -23,26 +23,44 @@ export const formatSheetName = (fileName: string): string => {
 };
 
 /**
- * Formats and filters data based on exclusion criteria.
- * Removes columns in COLUMNS_TO_EXCLUDE.
- * Ensures rows have Intent fields.
- * Volume filtering is now handled separately by filterByVolume.
+ * Formats and filters data based on provided columns.
  * 
  * @param data Raw data from Excel/CSV
- * @returns Formatted data
+ * @param columns Array of column names to include in the output
+ * @returns Formatted data with only the specified columns
  */
 export const formatData = (
-  data: Record<string, string | number>[]
+  data: Record<string, string | number>[],
+  columns: string[] = KW_RELEVANCY_COLUMNS
 ): FilteredDataRow[] => {
   return data
-    .map(row => ({
-      Keyword: String(row.Keyword || ''),
-      Position: String(row.Position || ''),
-      Volume: typeof row.Volume === 'string' ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10) || 0 : (row.Volume as number) || 0,
-      Type: String(row.Type || ''),
-      Intent: String(row.Intent || '')
-    }))
-    .filter(row => row.Intent !== '');
+    .map(row => {
+      const formattedRow: Partial<FilteredDataRow> = {};
+      
+      // Always include Keyword
+      formattedRow.Keyword = String(row.Keyword || '');
+      
+      // Include Volume with proper formatting
+      formattedRow.Volume = typeof row.Volume === 'string' 
+        ? parseInt(row.Volume.replace(/[,\s]/g, ''), 10) || 0 
+        : (row.Volume as number) || 0;
+      
+      // Conditionally add other fields based on columns array
+      if (columns.includes('Position')) {
+        formattedRow.Position = String(row.Position || '');
+      }
+      
+      if (columns.includes('Type')) {
+        formattedRow.Type = String(row.Type || '');
+      }
+      
+      if (columns.includes('Intent')) {
+        formattedRow.Intent = String(row.Intent || '');
+      }
+      
+      return formattedRow as FilteredDataRow;
+    })
+    .filter(row => !columns.includes('Intent') || (row.Intent !== undefined && row.Intent !== ''));
 };
 
 /**
@@ -64,7 +82,7 @@ export const parseVolume = (value: string | number): number => {
 /**
  * Filters data based on minimum volume threshold
  */
-export const filterByVolume = <T extends FilteredDataRow>(
+export const filterByVolume = <T extends {Volume: number}>(
   data: T[], 
   minVolume: number,
 ): T[] => {

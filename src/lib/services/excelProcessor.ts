@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData, DEFAULT_STORES, FilteredDataRow } from '../constants';
+import { FileData, DEFAULT_STORES, FilteredDataRow, KSUG_FORMATTER_COLUMNS } from '../constants';
 import { formatData, filterByVolume } from '../excel';
 
 export const processExcelFile = async (
@@ -95,12 +95,10 @@ export const processExcelFile = async (
             return obj;
           }, {} as Record<string, string | number>);
         });
-        const formattedJsonData = formatData(rowObjects) as FilteredDataRow[];
-
-        // Create shop set for faster lookups
-        const shopSet = new Set(shops.map(shop => shop.toLowerCase()));
-        const defaultShopSet = new Set(shops.slice(0, DEFAULT_STORES.length).map(shop => shop.toLowerCase()));
         
+        // Use KSUG_FORMATTER_COLUMNS for the Excel formatter app
+        const formattedJsonData = formatData(rowObjects, KSUG_FORMATTER_COLUMNS) as FilteredDataRow[];
+
         // Use filterByVolume utility
         const volumeFilteredData = filterByVolume(formattedJsonData, minVolume);
 
@@ -109,6 +107,10 @@ export const processExcelFile = async (
           const regex = new RegExp(`\\b${shopName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           return regex.test(value);
         };
+
+        // Create shop set for faster lookups
+        const shopSet = new Set(shops.map(shop => shop.toLowerCase()));
+        const defaultShopSet = new Set(shops.slice(0, DEFAULT_STORES.length).map(shop => shop.toLowerCase()));
 
         // Track rows removed by default shops
         const afterDefaultShops = volumeFilteredData.filter(row => 
@@ -403,31 +405,25 @@ export const downloadExcelFile = (
     file.filteredData.map(row => ({
       Keyword: row.Keyword,
       Intent: row.Intent,
-      Volume: row.Volume,
-      Source: file.sheetName
+      Volume: row.Volume
     }))
-  ).sort((a, b) => {
-    const volumeA = typeof a.Volume === 'string' ? parseInt(a.Volume, 10) : (a.Volume as number);
-    const volumeB = typeof b.Volume === 'string' ? parseInt(b.Volume, 10) : (b.Volume as number);
-    return (isNaN(volumeB) ? 0 : volumeB) - (isNaN(volumeA) ? 0 : volumeA);
-  });
+  );
 
   if (allKeywords.length > 0) {
     const combinedWorksheet = XLSX.utils.json_to_sheet(allKeywords, {
-      header: ['Keyword', 'Intent', 'Volume', 'Source']
+      header: KSUG_FORMATTER_COLUMNS
     });
 
     const columnWidths = [
       { wch: 40 }, // Keyword
       { wch: 25 }, // Intent
       { wch: 10 }, // Volume
-      { wch: 30 }, // Source
     ];
 
-    const range = XLSX.utils.decode_range(combinedWorksheet['!ref'] || 'A1:D1');
+    const range = XLSX.utils.decode_range(combinedWorksheet['!ref'] || 'A1:C1');
     
-    // Add autofilter to enable filtering
-    combinedWorksheet['!autofilter'] = { ref: combinedWorksheet['!ref'] || 'A1:D1' };
+    // Update autofilter
+    combinedWorksheet['!autofilter'] = { ref: combinedWorksheet['!ref'] || 'A1:C1' };
     
     for (let R = range.s.r; R <= range.e.r; R++) {
       for (let C = range.s.c; C <= range.e.c; C++) {
@@ -552,4 +548,4 @@ export const downloadExcelFile = (
 
   // Save the workbook
   XLSX.writeFile(workbook, `${outputFilename}.xlsx`);
-}; 
+};

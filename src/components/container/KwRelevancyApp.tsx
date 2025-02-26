@@ -14,7 +14,6 @@ import {
   FileList,
   DownloadSection,
   DownloadProgressDialog,
-  LargeFileDialog,
 } from '@/components/excel';
 import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
@@ -34,8 +33,6 @@ const KwRelevancyApp = () => {
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [showLargeFileDialog, setShowLargeFileDialog] = useState(false);
-  const [largeFiles, setLargeFiles] = useState<File[]>([]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -54,13 +51,6 @@ const KwRelevancyApp = () => {
       if (validFiles.length === 0) {
         setError('No valid Excel or CSV files found.');
         return;
-      }
-
-      // Check for large files
-      const largeFilesList = validFiles.filter(file => file.size > LARGE_FILE_THRESHOLD);
-      if (largeFilesList.length > 0) {
-        setLargeFiles(largeFilesList);
-        setShowLargeFileDialog(true);
       }
 
       const processedFiles = await Promise.all(
@@ -232,13 +222,6 @@ const KwRelevancyApp = () => {
         onOpenChange={setShowDownloadDialog}
         processing={isDownloading}
         fileCount={files.length}
-      />
-
-      <LargeFileDialog 
-        isOpen={showLargeFileDialog}
-        onOpenChange={setShowLargeFileDialog}
-        totalSize={largeFiles.reduce((total, file) => total + file.size, 0)}
-        processing={processing}
       />
     </div>
   );

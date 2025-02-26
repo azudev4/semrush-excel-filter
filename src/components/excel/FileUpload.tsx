@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FolderOpen } from 'lucide-react';
-import { LargeFileDialog } from './LargeFileDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileUploadProps {
@@ -17,8 +16,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   processing,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [showLargeFileDialog, setShowLargeFileDialog] = useState(false);
-  const [totalFileSize, setTotalFileSize] = useState(0);
   const [progressValue, setProgressValue] = useState(0);
   const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,12 +60,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   }, [processing, progressValue]);
 
-  useEffect(() => {
-    if (!processing && showLargeFileDialog) {
-      setShowLargeFileDialog(false);
-    }
-  }, [processing, showLargeFileDialog]);
-
   const isValidFileType = (filename: string): boolean => {
     return ACCEPTED_FILE_TYPES.some(type => 
       filename.toLowerCase().endsWith(type)
@@ -77,12 +68,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    
-    if (totalSize > LARGE_FILE_THRESHOLD) {
-      setTotalFileSize(totalSize);
-      setShowLargeFileDialog(true);
-    }
     
     handleFileUpload(e);
   };
@@ -138,8 +123,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       // Calculate size and show warning if needed
       const totalSize = droppedFiles.reduce((sum, file) => sum + file.size, 0);
       if (totalSize > LARGE_FILE_THRESHOLD) {
-        setTotalFileSize(totalSize);
-        setShowLargeFileDialog(true);
+        // setTotalFileSize(totalSize);
+        // setShowLargeFileDialog(true);
       }
 
       // Prepare the files for handling
@@ -176,8 +161,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       if (allFiles.length > 0) {
         const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
         if (totalSize > LARGE_FILE_THRESHOLD) {
-          setTotalFileSize(totalSize);
-          setShowLargeFileDialog(true);
+          // setTotalFileSize(totalSize);
+          // setShowLargeFileDialog(true);
         }
 
         if (fileInputRef.current) {
@@ -210,12 +195,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <LargeFileDialog 
-        isOpen={showLargeFileDialog} 
-        onOpenChange={setShowLargeFileDialog}
-        totalSize={totalFileSize}
-        processing={processing}
-      />
       <div className="mb-8">
         <motion.div 
           className="flex items-center gap-2 mb-4" 

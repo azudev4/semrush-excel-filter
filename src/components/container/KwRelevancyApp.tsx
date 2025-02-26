@@ -18,7 +18,7 @@ import {
 import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
 import { Input } from '@/components/ui/input';
-import { FileData, DEFAULT_MIN_VOLUME, LARGE_FILE_THRESHOLD } from '@/lib/constants';
+import { FileData, DEFAULT_MIN_VOLUME } from '@/lib/constants';
 import { ToolIntro } from '@/components/common/ToolIntro';
 import { BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';

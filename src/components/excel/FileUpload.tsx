@@ -67,8 +67,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
     handleFileUpload(e);
   };
 

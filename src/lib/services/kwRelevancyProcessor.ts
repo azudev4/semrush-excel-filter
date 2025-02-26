@@ -16,14 +16,6 @@ interface KeywordOccurrence {
   }>;
 }
 
-interface RawDataRow {
-  Keyword: string;
-  Position: string | number;
-  'Search Volume': number | string;
-  'Position Type': string;
-  [key: string]: unknown;
-}
-
 interface FilteredDataRow {
   Keyword: string;
   Position: string | number;
@@ -56,9 +48,16 @@ export const processKwRelevancyFile = async (
 
         let workbook;
         if (file.name.toLowerCase().endsWith('.csv')) {
-          workbook = XLSX.read(event.target.result as string, { type: 'string' });
+          workbook = XLSX.read(event.target.result as string, { 
+            type: 'string',
+            cellDates: true,
+            raw: false
+          });
         } else {
-          workbook = XLSX.read(new Uint8Array(event.target.result as ArrayBuffer), { type: 'array' });
+          workbook = XLSX.read(new Uint8Array(event.target.result as ArrayBuffer), { 
+            type: 'array',
+            cellDates: true 
+          });
         }
 
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -66,15 +65,37 @@ export const processKwRelevancyFile = async (
 
         if (!rawData.length) throw new Error('EMPTY_SHEET');
 
-        // Use parseVolume utility for volume parsing
-        const cleanData = (rawData as RawDataRow[]).map(row => ({
-          Keyword: row.Keyword || '',
-          Position: row.Position || '',
-          Volume: parseVolume(row['Search Volume']),
-          Type: row['Position Type'] || ''
-        }));
+        // Log the first row to diagnose column name issues
+        console.log("First row structure:", rawData[0]);
+        const headers = Object.keys(rawData[0] || {});
+        console.log("File headers:", headers);
 
-        // Use filterByVolume utility
+        // Check required columns with flexible matching
+        const keywordColumn = headers.find(h => /keyword/i.test(h));
+        const volumeColumn = headers.find(h => /volume|search.?volume/i.test(h));
+        let positionColumn = headers.find(h => /position/i.test(h));
+        let typeColumn = headers.find(h => /position.?type|type/i.test(h));
+
+        if (!keywordColumn) throw new Error('MISSING_KEYWORD_COLUMN');
+        if (!volumeColumn) throw new Error('MISSING_VOLUME_COLUMN');
+        if (!positionColumn) positionColumn = 'Position'; // Default fallback
+        if (!typeColumn) typeColumn = 'Type'; // Default fallback
+
+        // Process data in chunks
+        const chunkSize = 5000;
+        let cleanData: FilteredDataRow[] = [];
+        
+        for (let i = 0; i < rawData.length; i += chunkSize) {
+          const chunk = rawData.slice(i, i + chunkSize);
+          const processedChunk = chunk.map(row => ({
+            Keyword: String((row as Record<string, unknown>)[keywordColumn] || ''),
+            Position: String((row as Record<string, unknown>)[positionColumn] || ''),
+            Volume: parseVolume((row as Record<string, unknown>)[volumeColumn] as string | number),
+            Type: String((row as Record<string, unknown>)[typeColumn] || '')
+          }));
+          cleanData = [...cleanData, ...processedChunk];
+        }
+
         const filteredData = filterByVolume(cleanData, minVolume);
 
         resolve({
@@ -89,11 +110,16 @@ export const processKwRelevancyFile = async (
         });
 
       } catch (err) {
-        reject(new Error('Error processing file: ' + (err as Error).message));
+        console.error("Processing error details:", err);
+        console.error("File name:", file.name);
+        
+        const errorMsg = (err as Error).message;
+        const userError = getErrorMessage(errorMsg, file.name);
+        reject(new Error(userError));
       }
     };
 
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
 
     if (file.name.toLowerCase().endsWith('.csv')) {
       reader.readAsText(file);
@@ -102,6 +128,21 @@ export const processKwRelevancyFile = async (
     }
   });
 };
+
+function getErrorMessage(errorMsg: string, fileName: string): string {
+  switch (true) {
+    case errorMsg.includes('MISSING_KEYWORD_COLUMN'):
+      return 'Could not find a "Keyword" column in the file. Please ensure your file has this column.';
+    case errorMsg.includes('MISSING_VOLUME_COLUMN'):
+      return 'Could not find a "Volume" or "Search Volume" column in the file. Please ensure your file has this column.';
+    case errorMsg.includes('FILE_EMPTY'):
+      return `The file "${fileName}" appears to be empty.`;
+    case errorMsg.includes('EMPTY_SHEET'):
+      return `No data found in the first sheet of "${fileName}".`;
+    default:
+      return `Error processing file: ${fileName} - ${errorMsg}`;
+  }
+}
 
 export const generateKwRelevancyReport = (
   files: ProcessedData[],

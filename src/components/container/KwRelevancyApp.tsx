@@ -14,11 +14,12 @@ import {
   FileList,
   DownloadSection,
   DownloadProgressDialog,
+  LargeFileDialog,
 } from '@/components/excel';
 import { VolumeFilter } from '@/components/excel';
 import { processKwRelevancyFile, generateKwRelevancyReport } from '@/lib/services/kwRelevancyProcessor';
 import { Input } from '@/components/ui/input';
-import { FileData, DEFAULT_MIN_VOLUME } from '@/lib/constants';
+import { FileData, DEFAULT_MIN_VOLUME, LARGE_FILE_THRESHOLD } from '@/lib/constants';
 import { ToolIntro } from '@/components/common/ToolIntro';
 import { BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -33,6 +34,8 @@ const KwRelevancyApp = () => {
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showLargeFileDialog, setShowLargeFileDialog] = useState(false);
+  const [largeFiles, setLargeFiles] = useState<File[]>([]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -51,6 +54,13 @@ const KwRelevancyApp = () => {
       if (validFiles.length === 0) {
         setError('No valid Excel or CSV files found.');
         return;
+      }
+
+      // Check for large files
+      const largeFilesList = validFiles.filter(file => file.size > LARGE_FILE_THRESHOLD);
+      if (largeFilesList.length > 0) {
+        setLargeFiles(largeFilesList);
+        setShowLargeFileDialog(true);
       }
 
       const processedFiles = await Promise.all(
@@ -171,8 +181,19 @@ const KwRelevancyApp = () => {
             {error && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <Alert variant="destructive" className="mt-6">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertTitle>Error Processing File</AlertTitle>
+                  <AlertDescription className="space-y-2">
+                    <p>{error}</p>
+                    <details className="mt-2">
+                      <summary className="text-sm cursor-pointer hover:underline">Troubleshooting Tips</summary>
+                      <ul className="list-disc pl-6 mt-2 text-sm">
+                        <li>Check that your file has the required columns (Keyword, Volume, Position)</li>
+                        <li>For large files ({'>'}5MB), try splitting them into smaller files</li>
+                        <li>If using XLSX, try exporting as CSV instead</li>
+                        <li>Ensure your file is not password protected</li>
+                      </ul>
+                    </details>
+                  </AlertDescription>
                 </Alert>
               </div>
             )}
@@ -211,6 +232,13 @@ const KwRelevancyApp = () => {
         onOpenChange={setShowDownloadDialog}
         processing={isDownloading}
         fileCount={files.length}
+      />
+
+      <LargeFileDialog 
+        isOpen={showLargeFileDialog}
+        onOpenChange={setShowLargeFileDialog}
+        totalSize={largeFiles.reduce((total, file) => total + file.size, 0)}
+        processing={processing}
       />
     </div>
   );

@@ -95,7 +95,7 @@ export const processExcelFile = async (
             return obj;
           }, {} as Record<string, string | number>);
         });
-        const formattedJsonData = formatData(rowObjects, minVolume) as FilteredDataRow[];
+        const formattedJsonData = formatData(rowObjects) as FilteredDataRow[];
 
         // Create shop set for faster lookups
         const shopSet = new Set(shops.map(shop => shop.toLowerCase()));

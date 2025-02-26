@@ -1256,6 +1256,8 @@ export const COLUMNS_TO_EXCLUDE = [
 ];
 export const DEFAULT_MIN_VOLUME = 100;
 
+export const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB threshold
+
 export interface FileData {
   id: string;
   originalData: FilteredDataRow[];

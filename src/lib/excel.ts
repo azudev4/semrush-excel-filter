@@ -23,18 +23,16 @@ export const formatSheetName = (fileName: string): string => {
 };
 
 /**
- * Formats and filters data based on volume and exclusion criteria.
+ * Formats and filters data based on exclusion criteria.
  * Removes columns in COLUMNS_TO_EXCLUDE.
- * Filters out rows with Volume below minVolume.
- * Ensures rows have both Volume and Intent fields.
+ * Ensures rows have Intent fields.
+ * Volume filtering is now handled separately by filterByVolume.
  * 
  * @param data Raw data from Excel/CSV
- * @param minVolume Minimum volume threshold
- * @returns Filtered and formatted data
+ * @returns Formatted data
  */
 export const formatData = (
-  data: Record<string, string | number>[],
-  minVolume: number
+  data: Record<string, string | number>[]
 ): FilteredDataRow[] => {
   return data
     .map(row => ({
@@ -44,7 +42,7 @@ export const formatData = (
       Type: String(row.Type || ''),
       Intent: String(row.Intent || '')
     }))
-    .filter(row => row.Volume >= minVolume && row.Intent !== '');
+    .filter(row => row.Intent !== '');
 };
 
 /**

@@ -9,6 +9,17 @@ import { motion } from 'framer-motion';
 export const MainNav = () => {
   const pathname = usePathname();
   const [prevPath, setPrevPath] = useState(pathname);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setHasScrolled(scrollPosition > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (pathname !== prevPath) {
@@ -37,7 +48,12 @@ export const MainNav = () => {
   return (
     <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50">
       <motion.div 
-        className="bg-white/90 backdrop-blur-sm border rounded-full px-2 py-1.5 shadow-md mb-6"
+        className={cn(
+          "backdrop-blur-sm border rounded-full px-2 py-1.5 mb-6 transition-all duration-300",
+          hasScrolled 
+            ? "bg-white shadow-xl border-white/70 translate-y-1 scale-[1.03]" 
+            : "bg-white/90 shadow-md border-white/50"
+        )}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}

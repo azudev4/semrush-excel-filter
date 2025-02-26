@@ -3,9 +3,6 @@ import React, { useState } from 'react';
 import { 
   Card, 
   CardContent,
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
 } from '@/components/ui/card';
 import { 
   Alert,
@@ -24,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { FileData, DEFAULT_MIN_VOLUME } from '@/lib/constants';
 import { ToolIntro } from '@/components/common/ToolIntro';
 import { BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const KwRelevancyApp = () => {
   const [mainKeyword, setMainKeyword] = useState('');
@@ -119,10 +117,17 @@ const KwRelevancyApp = () => {
         
         <Card>
           <CardContent className="pt-6 space-y-6">
+            <motion.div 
+              className="flex items-center gap-2 mb-4" 
+              initial={{ opacity: 0, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <div className="h-6 w-1 bg-[#004526] rounded-full" />
+              <h3 className="text-base font-medium">Main Keyword</h3>
+            </motion.div>
+            
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                Main Keyword
-              </label>
               <Input
                 type="text"
                 value={mainKeyword}

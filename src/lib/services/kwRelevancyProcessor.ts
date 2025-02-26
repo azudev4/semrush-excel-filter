@@ -111,66 +111,7 @@ export const generateKwRelevancyReport = (
   const workbook = XLSX.utils.book_new();
   const usedSheetNames = new Set<string>();
 
-  // 1. First add individual sheets for each competitor
-  files.forEach(file => {
-    const worksheet = XLSX.utils.json_to_sheet(file.filteredData);
-    
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 40 }, // Keyword
-      { wch: 10 }, // Position
-      { wch: 15 }, // Volume
-      { wch: 15 }, // Type
-    ];
-
-    // Style the sheet
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:D1');
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!worksheet[cell_ref]) continue;
-
-        const cell = worksheet[cell_ref];
-        
-        if (R === 0) {
-          cell.s = {
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { patternType: "solid", fgColor: { rgb: "004526" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "B0B0B0" } },
-              bottom: { style: "thin", color: { rgb: "B0B0B0" } },
-              left: { style: "thin", color: { rgb: "B0B0B0" } },
-              right: { style: "thin", color: { rgb: "B0B0B0" } }
-            }
-          };
-        } else {
-          cell.s = {
-            border: {
-              top: { style: "thin", color: { rgb: "B0B0B0" } },
-              bottom: { style: "thin", color: { rgb: "B0B0B0" } },
-              left: { style: "thin", color: { rgb: "B0B0B0" } },
-              right: { style: "thin", color: { rgb: "B0B0B0" } }
-            },
-            fill: {
-              patternType: "solid",
-              fgColor: { rgb: R % 2 ? "F0F7F4" : "FFFFFF" }
-            }
-          };
-        }
-
-        // Add number formatting for volume
-        if (C === 2 && R > 0) {
-          cell.z = '#,##0';
-        }
-      }
-    }
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, file.sheetName);
-    usedSheetNames.add(file.sheetName);
-  });
-
-  // 2. Create summary data
+  // 1. Create keyword map and process data for summary
   const keywordMap = new Map<string, KeywordOccurrence>();
 
   files.forEach(file => {
@@ -230,7 +171,7 @@ export const generateKwRelevancyReport = (
       return b.totalVolume - a.totalVolume;
     });
 
-  // 3. Create summary sheet with streamlined structure
+  // 2. Create and add summary sheet FIRST
   const title = mainKeyword 
     ? `Keyword Relevancy Analysis: ${mainKeyword}`
     : 'Keyword Relevancy Analysis';
@@ -364,7 +305,67 @@ export const generateKwRelevancyReport = (
     }
   }
 
+  // Add the summary sheet FIRST
   XLSX.utils.book_append_sheet(workbook, summarySheet, '📊 Summary');
+
+  // 3. Then add individual sheets for each competitor
+  files.forEach(file => {
+    const worksheet = XLSX.utils.json_to_sheet(file.filteredData);
+    
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 40 }, // Keyword
+      { wch: 10 }, // Position
+      { wch: 15 }, // Volume
+      { wch: 15 }, // Type
+    ];
+
+    // Style the sheet
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:D1');
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!worksheet[cell_ref]) continue;
+
+        const cell = worksheet[cell_ref];
+        
+        if (R === 0) {
+          cell.s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { patternType: "solid", fgColor: { rgb: "004526" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "B0B0B0" } },
+              bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+              left: { style: "thin", color: { rgb: "B0B0B0" } },
+              right: { style: "thin", color: { rgb: "B0B0B0" } }
+            }
+          };
+        } else {
+          cell.s = {
+            border: {
+              top: { style: "thin", color: { rgb: "B0B0B0" } },
+              bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+              left: { style: "thin", color: { rgb: "B0B0B0" } },
+              right: { style: "thin", color: { rgb: "B0B0B0" } }
+            },
+            fill: {
+              patternType: "solid",
+              fgColor: { rgb: R % 2 ? "F0F7F4" : "FFFFFF" }
+            }
+          };
+        }
+
+        // Add number formatting for volume
+        if (C === 2 && R > 0) {
+          cell.z = '#,##0';
+        }
+      }
+    }
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, file.sheetName);
+    usedSheetNames.add(file.sheetName);
+  });
 
   // Save the workbook
   XLSX.writeFile(workbook, `${outputFilename}.xlsx`);

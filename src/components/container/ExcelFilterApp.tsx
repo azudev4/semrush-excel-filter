@@ -2,10 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Card, 
-  CardContent, 
-  CardHeader, 
-  CardDescription, 
-  CardTitle 
+  CardContent,
 } from '@/components/ui/card';
 import { 
   Alert,
@@ -13,14 +10,14 @@ import {
   AlertTitle,
 } from '@/components/ui/alert';
 import { 
-  StoreFilters,
-  VolumeFilter,
   FileUpload,
   FileList,
+  StoreFilters,
   DownloadSection,
-  DeletedRowsSummary
+  DeletedRowsSummary,
 } from '@/components/excel';
-import { DEFAULT_STORES, DEFAULT_MIN_VOLUME, type FileData } from '@/lib/constants';
+import { VolumeFilter } from '@/components/excel';
+import { FileData, DEFAULT_MIN_VOLUME, DEFAULT_STORES } from '@/lib/constants';
 import { formatSheetName } from '@/lib/excel';
 import { processExcelFile, downloadExcelFile } from '@/lib/services/excelProcessor';
 import { ToolIntro } from '@/components/common/ToolIntro';

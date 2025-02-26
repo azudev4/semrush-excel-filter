@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Plus, Store, HelpCircle, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { DEFAULT_STORES } from '@/lib/constants';
+import { motion } from 'framer-motion';
 
 interface StoreFiltersProps {
   defaultShops: string[];
@@ -55,6 +56,16 @@ export const StoreFilters: React.FC<StoreFiltersProps> = ({
 
   return (
     <div className="mb-6">
+      <motion.div 
+        className="flex items-center gap-2 mb-4" 
+        initial={{ opacity: 0, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.1 }}
+      >
+        <div className="h-6 w-1 bg-[#004526] rounded-full" />
+        <h3 className="text-base font-medium">Store Filters</h3>
+      </motion.div>
+
       <form onSubmit={addShop} className="flex gap-4 mb-6">
         <div className="flex-1">
           <Input

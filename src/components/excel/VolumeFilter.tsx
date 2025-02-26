@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { HelpCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface VolumeFilterProps {
   minVolume: number;
@@ -40,9 +41,15 @@ export const VolumeFilter: React.FC<VolumeFilterProps> = ({
 
   return (
     <div className="mt-6 border-t pt-4">
-      <div className="flex items-center justify-between mb-4">
+      <motion.div 
+        className="flex items-center justify-between gap-2 mb-4" 
+        initial={{ opacity: 0, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.1 }}
+      >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium">Minimum Search Volume:</h3>
+          <div className="h-6 w-1 bg-[#004526] rounded-full" />
+          <h3 className="text-base font-medium">Minimum Search Volume</h3>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" className="h-6 w-6 p-0">
@@ -51,19 +58,16 @@ export const VolumeFilter: React.FC<VolumeFilterProps> = ({
             </PopoverTrigger>
             <PopoverContent className="w-80">
               <div className="space-y-2">
-                <h4 className="font-medium">Data Processing Rules</h4>
+                <h4 className="font-medium">Volume Filter</h4>
                 <div className="text-sm text-muted-foreground space-y-2">
-                  <p>The following filters are applied to your data:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>Removes rows with volume less than {minVolume}</li>
-                    <li>Excludes columns: CPC, SERP Features, Keyword Difficulty</li>
-                    <li>Only keeps the Keyword, Intent, and Volume columns</li>
-                  </ul>
+                  <p>This filter removes keywords with low search volume from your dataset.</p>
+                  <p>Only keywords with at least {minVolume} searches per month will be included in the results.</p>
                 </div>
               </div>
             </PopoverContent>
           </Popover>
         </div>
+        
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -75,7 +79,7 @@ export const VolumeFilter: React.FC<VolumeFilterProps> = ({
           />
           <span className="text-sm text-muted-foreground">searches/month</span>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }; 

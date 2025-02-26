@@ -86,15 +86,15 @@ yarn install
 3. Install required shadcn/ui components:
 
 ```bash
-npx shadcn-ui@latest add card
-npx shadcn-ui@latest add input
-npx shadcn-ui@latest add button
-npx shadcn-ui@latest add badge
-npx shadcn-ui@latest add alert
-npx shadcn-ui@latest add popover
-npx shadcn-ui@latest add table
-npx shadcn-ui@latest add progress
-npx shadcn-ui@latest add dialog
+npx shadcn@latest add card
+npx shadcn@latest add input
+npx shadcn@latest add button
+npx shadcn@latest add badge
+npx shadcn@latest add alert
+npx shadcn@latest add popover
+npx shadcn@latest add table
+npx shadcn@latest add progress
+npx shadcn@latest add dialog
 ```
 
 4. Run the development server:

@@ -144,18 +144,53 @@ function getErrorMessage(errorMsg: string, fileName: string): string {
   }
 }
 
+// Question words in English and French
+const QUESTION_WORDS = [
+  // English question words
+  'why', 'how', 'what', 'when', 'where', 'which', 'who', 'whose', 'whom',
+  // French question words
+  'pourquoi', 'comment', 'quoi', 'que', 'qu', 'quand', 'où', 'quel', 'quelle', 
+  'quels', 'quelles', 'qui', 'combien', 'lequel', 'laquelle', 'lesquels', 'lesquelles'
+];
+
+// Function to check if a keyword is a question
+function isQuestionKeyword(keyword: string): boolean {
+  const lowercaseKeyword = keyword.toLowerCase();
+  return QUESTION_WORDS.some(word => 
+    lowercaseKeyword.startsWith(word + ' ') || 
+    lowercaseKeyword.includes(' ' + word + ' ')
+  );
+}
+
+// Filter for question keywords
+function filterQuestionKeywords(data: FilteredDataRow[]): FilteredDataRow[] {
+  return data.filter(row => isQuestionKeyword(row.Keyword));
+}
+
 export const generateKwRelevancyReport = (
   files: ProcessedData[],
   outputFilename: string,
-  mainKeyword: string
+  mainKeyword: string,
+  keepOnlyQuestions: boolean = false
 ): void => {
   const workbook = XLSX.utils.book_new();
   const usedSheetNames = new Set<string>();
 
-  // 1. Create keyword map and process data for summary
+  // 1. Filter data if needed
+  const processedFiles = files.map(file => {
+    if (keepOnlyQuestions) {
+      return {
+        ...file,
+        filteredData: filterQuestionKeywords(file.filteredData)
+      };
+    }
+    return file;
+  });
+
+  // 2. Create keyword map and process data for summary
   const keywordMap = new Map<string, KeywordOccurrence>();
 
-  files.forEach(file => {
+  processedFiles.forEach(file => {
     file.filteredData.forEach((row: FilteredDataRow) => {
       const keyword = row.Keyword?.toString().toLowerCase();
       if (!keyword) return;
@@ -212,14 +247,14 @@ export const generateKwRelevancyReport = (
       return b.totalVolume - a.totalVolume;
     });
 
-  // 2. Create and add summary sheet FIRST
+  // 3. Create and add summary sheet FIRST
   const title = mainKeyword 
     ? `Keyword Relevancy Analysis: ${mainKeyword}`
     : 'Keyword Relevancy Analysis';
 
   const summaryData = [
     [title],
-    ['Top Keyword Opportunities'],
+    [keepOnlyQuestions ? 'Top Question-Based Keyword Opportunities' : 'Top Keyword Opportunities'],
     ['Keyword', 'Best Position', 'Total Volume', 'Type', 'Occurrences', 'Details'],
     ...sortedKeywords.map(kw => [
       kw.keyword,
@@ -318,7 +353,7 @@ export const generateKwRelevancyReport = (
           }
         };
       } else {
-        // Data rows style
+                  // Data rows style
         cell.s = {
           font: { size: 10 },
           alignment: {
@@ -350,7 +385,7 @@ export const generateKwRelevancyReport = (
   XLSX.utils.book_append_sheet(workbook, summarySheet, '📊 Summary');
 
   // 3. Then add individual sheets for each competitor
-  files.forEach(file => {
+  processedFiles.forEach(file => {
     const worksheet = XLSX.utils.json_to_sheet(file.filteredData);
     
     // Set column widths

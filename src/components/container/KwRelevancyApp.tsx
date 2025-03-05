@@ -1,4 +1,5 @@
 'use client'
+
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -31,6 +32,7 @@ const KwRelevancyApp = () => {
   const [error, setError] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState('kw_relevancy_analysis');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
+  const [keepOnlyQuestions, setKeepOnlyQuestions] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -94,7 +96,7 @@ const KwRelevancyApp = () => {
     
     // Use setTimeout to allow the dialog to render before starting the processing
     setTimeout(() => {
-      generateKwRelevancyReport(files, outputFilename, mainKeyword);
+      generateKwRelevancyReport(files, outputFilename, mainKeyword, keepOnlyQuestions);
       setIsDownloading(false);
     }, 100);
   };
@@ -165,6 +167,9 @@ const KwRelevancyApp = () => {
                 setIncludeSummarySheet={setIncludeSummarySheet}
                 onDownload={handleDownload}
                 disabled={files.length === 0}
+                showQuestionFilter={true}
+                keepOnlyQuestions={keepOnlyQuestions}
+                setKeepOnlyQuestions={setKeepOnlyQuestions}
               />
             </div>
 

@@ -16,6 +16,9 @@ interface DownloadSectionProps {
   setIncludeSummarySheet: (include: boolean) => void;
   onDownload: () => void;
   disabled: boolean;
+  showQuestionFilter?: boolean;
+  keepOnlyQuestions?: boolean;
+  setKeepOnlyQuestions?: (keep: boolean) => void;
 }
 
 export const DownloadSection: React.FC<DownloadSectionProps> = ({
@@ -25,6 +28,9 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
   setIncludeSummarySheet,
   onDownload,
   disabled,
+  showQuestionFilter = false,
+  keepOnlyQuestions = false,
+  setKeepOnlyQuestions = () => {},
 }) => {
   return (
     <div className="border-t pt-6">
@@ -51,6 +57,9 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
                   <li>Removes rows with volume less than the minimum specified</li>
                   <li>Excludes columns: CPC, SERP Features, Keyword Difficulty</li>
                   <li>Only keeps the Keyword, Intent, and Volume columns</li>
+                  {showQuestionFilter && (
+                    <li>Optional: Filter to keep only question-based keywords</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -72,17 +81,34 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
               className="w-full focus-visible:ring-[#004526]"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="includeSummary"
-              checked={includeSummarySheet}
-              onChange={(e) => setIncludeSummarySheet(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#004526] focus:ring-[#004526]"
-            />
-            <label htmlFor="includeSummary" className="text-sm text-gray-600">
-              Include summary sheet with total volumes
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeSummary"
+                checked={includeSummarySheet}
+                onChange={(e) => setIncludeSummarySheet(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-[#004526] focus:ring-[#004526]"
+              />
+              <label htmlFor="includeSummary" className="text-sm text-gray-600">
+                Include summary sheet with total volumes
+              </label>
+            </div>
+            
+            {showQuestionFilter && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="keepOnlyQuestions"
+                  checked={keepOnlyQuestions}
+                  onChange={(e) => setKeepOnlyQuestions(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-[#004526] focus:ring-[#004526]"
+                />
+                <label htmlFor="keepOnlyQuestions" className="text-sm text-gray-600">
+                  Keep only question keywords (why, how, what, où, comment, pourquoi, etc.)
+                </label>
+              </div>
+            )}
           </div>
         </div>
         <Button 
@@ -96,4 +122,4 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
       </div>
     </div>
   );
-}; 
+};

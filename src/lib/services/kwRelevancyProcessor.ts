@@ -32,6 +32,19 @@ export const processKwRelevancyFile = async (
   sheetName: string,
   minVolume: number = DEFAULT_MIN_VOLUME
 ): Promise<ProcessedData> => {
+  // Extract domain name and region from filename
+  const getSheetNameFromFile = (filename: string): string => {
+    // Match pattern: domain.com-organic.Positions-{region}-{date}
+    const match = filename.match(/^([^-]+)-organic\.Positions-([^-]+)/);
+    if (match) {
+      const [, domain, region] = match;
+      // Extract base domain name without .com/.fr/etc and combine with region
+      const baseDomain = domain.split('.')[0];
+      return `${baseDomain}_${region}`.toLowerCase();
+    }
+    return sheetName; // Fallback to original sheetName if pattern doesn't match
+  };
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -101,7 +114,7 @@ export const processKwRelevancyFile = async (
         resolve({
           id: crypto.randomUUID(),
           fileName: file.name,
-          sheetName: sheetName || file.name.split('.')[0],
+          sheetName: getSheetNameFromFile(file.name),
           originalRows: cleanData.length,
           filteredRows: filteredData.length,
           volumeFilteredRows: cleanData.length - filteredData.length,

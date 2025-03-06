@@ -252,23 +252,78 @@ export const generateKwRelevancyReport = (
     ? `Keyword Relevancy Analysis: ${mainKeyword}`
     : 'Keyword Relevancy Analysis';
 
-  const summaryData = [
-    [title],
-    [keepOnlyQuestions ? 'Top Question-Based Keyword Opportunities' : 'Top Keyword Opportunities'],
-    ['Keyword', 'Best Position', 'Total Volume', 'Type', 'Occurrences', 'Details'],
-    ...sortedKeywords.map(kw => [
-      kw.keyword,
-      Math.min(...kw.competitors.map(c => Number(c.position) || 999)),
-      kw.totalVolume,
-      kw.type,
-      kw.occurrences,
-      kw.competitors.map(c => `${c.name}(#${c.position})`).join(', ')
-    ])
-  ];
+  let summaryData;
+  if (sortedKeywords.length === 0) {
+    // Handle empty data case
+    summaryData = [
+      [title],
+      [keepOnlyQuestions ? 'Top Question-Based Keyword Opportunities' : 'Top Keyword Opportunities'],
+      ['No corresponding rows were detected']
+    ];
+  } else {
+    summaryData = [
+      [title],
+      [keepOnlyQuestions ? 'Top Question-Based Keyword Opportunities' : 'Top Keyword Opportunities'],
+      ['Keyword', 'Best Position', 'Total Volume', 'Type', 'Occurrences', 'Details'],
+      ...sortedKeywords.map(kw => [
+        kw.keyword,
+        Math.min(...kw.competitors.map(c => Number(c.position) || 999)),
+        kw.totalVolume,
+        kw.type,
+        kw.occurrences,
+        kw.competitors.map(c => `${c.name}(#${c.position})`).join(', ')
+      ])
+    ];
+  }
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-  // Column widths
+  // Style the empty data message if present
+  if (sortedKeywords.length === 0) {
+    const cell_ref = XLSX.utils.encode_cell({ r: 2, c: 0 });
+    summarySheet[cell_ref] = {
+      v: 'No corresponding rows were detected',
+      s: {
+        font: { 
+          bold: true,
+          color: { rgb: "FFFFFF" }
+        },
+        fill: {
+          patternType: "solid",
+          fgColor: { rgb: "FF0000" }
+        },
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "B0B0B0" } },
+          bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+          left: { style: "thin", color: { rgb: "B0B0B0" } },
+          right: { style: "thin", color: { rgb: "B0B0B0" } }
+        }
+      }
+    };
+
+    // Set row height for the message
+    if (!summarySheet['!rows']) {
+      summarySheet['!rows'] = [];
+    }
+    summarySheet['!rows'][2] = { hpt: 25 }; // Set height for the message row
+
+    // Merge cells for the message to span all columns
+    summarySheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Title
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Subtitle
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }  // Message - spans all columns
+    ];
+
+    // Set the reference range to include all merged cells
+    summarySheet['!ref'] = 'A1:F3';
+  }
+
+  // Set column widths
   summarySheet['!cols'] = [
     { wch: 45 }, // Keyword
     { wch: 15 }, // Best Position
@@ -386,7 +441,58 @@ export const generateKwRelevancyReport = (
 
   // 3. Then add individual sheets for each competitor
   processedFiles.forEach(file => {
-    const worksheet = XLSX.utils.json_to_sheet(file.filteredData);
+    let worksheet;
+    
+    if (file.filteredData.length === 0) {
+      // Create empty sheet with message
+      worksheet = XLSX.utils.aoa_to_sheet([
+        ['Keyword', 'Position', 'Volume', 'Type'],
+        ['No corresponding rows were detected']
+      ]);
+      
+      // Style the empty data message
+      const cell_ref = XLSX.utils.encode_cell({ r: 1, c: 0 });
+      worksheet[cell_ref] = {
+        v: 'No corresponding rows were detected',
+        s: {
+          font: { 
+            bold: true,
+            color: { rgb: "FFFFFF" }
+          },
+          fill: {
+            patternType: "solid",
+            fgColor: { rgb: "FF0000" }
+          },
+          alignment: {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: true
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "B0B0B0" } },
+            bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+            left: { style: "thin", color: { rgb: "B0B0B0" } },
+            right: { style: "thin", color: { rgb: "B0B0B0" } }
+          }
+        }
+      };
+
+      // Set row height for the message
+      worksheet['!rows'] = [
+        { hpt: 30 }, // Header row
+        { hpt: 25 }  // Message row
+      ];
+
+      // Merge cells for the message
+      worksheet['!merges'] = [
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }  // Message spans all columns
+      ];
+
+      // Set the reference range
+      worksheet['!ref'] = 'A1:D2';
+    } else {
+      worksheet = XLSX.utils.json_to_sheet(file.filteredData);
+    }
     
     // Set column widths
     worksheet['!cols'] = [
@@ -417,7 +523,7 @@ export const generateKwRelevancyReport = (
               right: { style: "thin", color: { rgb: "B0B0B0" } }
             }
           };
-        } else {
+        } else if (file.filteredData.length > 0) {
           cell.s = {
             border: {
               top: { style: "thin", color: { rgb: "B0B0B0" } },

@@ -38,9 +38,8 @@ export const processKwRelevancyFile = async (
     const match = filename.match(/^([^-]+)-organic\.Positions-([^-]+)/);
     if (match) {
       const [, domain, region] = match;
-      // Extract base domain name without .com/.fr/etc and combine with region
-      const baseDomain = domain.split('.')[0];
-      return `${baseDomain}_${region}`.toLowerCase();
+      // Keep the full domain name with the dot
+      return `${domain}_${region}`.toLowerCase();
     }
     return sheetName; // Fallback to original sheetName if pattern doesn't match
   };
@@ -504,7 +503,14 @@ export const generateKwRelevancyReport = (
       // Set the reference range
       worksheet['!ref'] = 'A1:D2';
     } else {
-      worksheet = XLSX.utils.json_to_sheet(file.filteredData);
+      // Sort the filtered data by volume in descending order
+      const sortedData = [...file.filteredData].sort((a, b) => {
+        const volumeA = typeof a.Volume === 'number' ? a.Volume : 0;
+        const volumeB = typeof b.Volume === 'number' ? b.Volume : 0;
+        return volumeB - volumeA;
+      });
+      
+      worksheet = XLSX.utils.json_to_sheet(sortedData);
     }
     
     // Set column widths

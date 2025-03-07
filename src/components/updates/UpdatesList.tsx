@@ -82,10 +82,11 @@ export const UpdatesList = () => {
               <Image 
                 src={commit.avatarUrl} 
                 alt={commit.author} 
-                width={500}
-                height={300}
+                width={40}
+                height={40}
                 className="w-8 h-8 rounded-full mt-1"
                 priority={index === 0}
+                unoptimized={true}
               />
               
               <div className="flex-1">

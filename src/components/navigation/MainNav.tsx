@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
-import { FileSpreadsheet, FileText } from 'lucide-react';
+import { FileSpreadsheet, FileText, GitBranch } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const MainNav = () => {
@@ -32,7 +32,7 @@ export const MainNav = () => {
     }
   }, [pathname, prevPath]);
 
-  const navigation = [
+  const toolNavigation = [
     {
       name: 'KSUG Formatter',
       href: '/',
@@ -44,6 +44,12 @@ export const MainNav = () => {
       icon: FileText,
     }
   ];
+
+  const updatesNavigation = {
+    name: 'Updates',
+    href: '/updates',
+    icon: GitBranch,
+  };
 
   return (
     <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50">
@@ -58,33 +64,58 @@ export const MainNav = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <nav className="flex items-center gap-1">
-          {navigation.map((item, i) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            
-            return (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1, duration: 0.3 }}
-              >
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "relative flex items-center gap-2 px-4 py-1.5 rounded-full transition-colors",
-                    isActive
-                      ? "text-[#004526] bg-[#004526]/5"
-                      : "text-gray-600 hover:text-[#004526] hover:bg-[#004526]/5"
-                  )}
+        <nav className="flex items-center">
+          <div className="flex items-center gap-1">
+            {toolNavigation.map((item, i) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1, duration: 0.3 }}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{item.name}</span>
-                </Link>
-              </motion.div>
-            );
-          })}
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "relative flex items-center gap-2 px-4 py-1.5 rounded-full transition-colors",
+                      isActive
+                        ? "text-[#004526] bg-[#004526]/5"
+                        : "text-gray-600 hover:text-[#004526] hover:bg-[#004526]/5"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm font-medium">{item.name}</span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Separator */}
+          <div className="mx-2 h-5 w-px bg-gray-300/50"></div>
+
+          {/* Updates navigation item */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <Link
+              href={updatesNavigation.href}
+              className={cn(
+                "relative flex items-center gap-2 px-4 py-1.5 rounded-full transition-colors",
+                pathname === updatesNavigation.href
+                  ? "text-[#004526] bg-[#004526]/5"
+                  : "text-gray-600 hover:text-[#004526] hover:bg-[#004526]/5"
+              )}
+            >
+              <updatesNavigation.icon className="h-4 w-4" />
+              <span className="text-sm font-medium">{updatesNavigation.name}</span>
+            </Link>
+          </motion.div>
         </nav>
       </motion.div>
     </div>

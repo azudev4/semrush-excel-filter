@@ -96,6 +96,9 @@ export const processExcelFile = async (
           }, {} as Record<string, string | number>);
         });
         
+        // Count rows before formatting and filtering
+        const originalRowCount = rowObjects.length;
+        
         // Use KSUG_FORMATTER_COLUMNS for the Excel formatter app
         const formattedJsonData = formatData(rowObjects, KSUG_FORMATTER_COLUMNS) as FilteredDataRow[];
 
@@ -136,7 +139,7 @@ export const processExcelFile = async (
           filteredData: fullyFilteredData,
           fileName: file.name,
           sheetName: sheetName || file.name.split('.')[0],
-          originalRows: formattedJsonData.length,
+          originalRows: originalRowCount,
           filteredRows: fullyFilteredData.length,
           storeFilteredRows: volumeFilteredData.length - afterDefaultShops.length,
           customStoreFilteredRows: afterDefaultShops.length - fullyFilteredData.length,

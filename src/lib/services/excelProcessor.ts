@@ -100,9 +100,9 @@ export const processExcelFile = async (
         const originalRowCount = rowObjects.length;
         
         // Use KSUG_FORMATTER_COLUMNS for the Excel formatter app
-        const formattedJsonData = formatData(rowObjects, KSUG_FORMATTER_COLUMNS) as FilteredDataRow[];
+        const formattedJsonData = formatData(rowObjects, KSUG_FORMATTER_COLUMNS, false) as FilteredDataRow[];
 
-        // Use filterByVolume utility
+        // Use filterByVolume utility (which now skips filtering when minVolume is 0)
         const volumeFilteredData = filterByVolume(formattedJsonData, minVolume);
 
         // Helper function to check if a value contains a shop name

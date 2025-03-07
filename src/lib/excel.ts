@@ -27,13 +27,15 @@ export const formatSheetName = (fileName: string): string => {
  * 
  * @param data Raw data from Excel/CSV
  * @param columns Array of column names to include in the output
+ * @param filterEmptyIntent Whether to filter out rows with empty Intent values
  * @returns Formatted data with only the specified columns
  */
 export const formatData = (
   data: Record<string, string | number>[],
-  columns: string[] = KW_RELEVANCY_COLUMNS
+  columns: string[] = KW_RELEVANCY_COLUMNS,
+  filterEmptyIntent: boolean = true  // Add parameter to control Intent filtering
 ): FilteredDataRow[] => {
-  return data
+  const mapped = data
     .map(row => {
       const formattedRow: Partial<FilteredDataRow> = {};
       
@@ -59,8 +61,14 @@ export const formatData = (
       }
       
       return formattedRow as FilteredDataRow;
-    })
-    .filter(row => !columns.includes('Intent') || (row.Intent !== undefined && row.Intent !== ''));
+    });
+    
+  // Only filter by Intent if filterEmptyIntent is true
+  if (filterEmptyIntent && columns.includes('Intent')) {
+    return mapped.filter(row => row.Intent !== undefined && row.Intent !== '');
+  }
+  
+  return mapped;
 };
 
 /**
@@ -80,12 +88,18 @@ export const parseVolume = (value: string | number): number => {
 };
 
 /**
- * Filters data based on minimum volume threshold
+ * Filters data based on minimum volume threshold.
+ * If minVolume is 0, returns all data without filtering.
  */
 export const filterByVolume = <T extends {Volume: number}>(
   data: T[], 
   minVolume: number,
 ): T[] => {
+  // Skip volume filtering when minVolume is 0
+  if (minVolume === 0) {
+    return data;
+  }
+  
   return data.filter(row => {
     const volume = parseVolume(row.Volume);
     return !isNaN(volume) && volume >= minVolume;

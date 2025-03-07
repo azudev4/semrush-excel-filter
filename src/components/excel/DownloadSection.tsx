@@ -19,6 +19,8 @@ interface DownloadSectionProps {
   showQuestionFilter?: boolean;
   keepOnlyQuestions?: boolean;
   setKeepOnlyQuestions?: (keep: boolean) => void;
+  removeDuplicates?: boolean;
+  setRemoveDuplicates?: (remove: boolean) => void;
 }
 
 export const DownloadSection: React.FC<DownloadSectionProps> = ({
@@ -31,6 +33,8 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
   showQuestionFilter = false,
   keepOnlyQuestions = false,
   setKeepOnlyQuestions = () => {},
+  removeDuplicates = true,
+  setRemoveDuplicates = () => {},
 }) => {
   return (
     <div className="border-t pt-6">
@@ -94,6 +98,33 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
                 Include summary sheet with total volumes
               </label>
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="removeDuplicates"
+                checked={removeDuplicates}
+                onChange={(e) => setRemoveDuplicates(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-[#004526] focus:ring-[#004526]"
+              />
+              <label htmlFor="removeDuplicates" className="text-sm text-gray-600 flex items-center">
+                Remove duplicates
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" className="h-5 w-5 p-0 ml-1">
+                      <HelpCircle className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Similar Keywords Detection</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Removes similar keywords like &ldquo;t-shirt&rdquo; vs &ldquo;t shirt&rdquo; by normalizing spaces, hyphens, and accents. Only keeps the variation with the highest search volume.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </label>
+            </div>
             
             {showQuestionFilter && (
               <div className="flex items-center gap-2">
@@ -120,6 +151,9 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
           Download Combined File
         </Button>
       </div>
+      <p className="text-sm text-gray-500 mt-2">
+        Click on &ldquo;Download&rdquo; and then &ldquo;Save&rdquo; to save the file to your computer.
+      </p>
     </div>
   );
 };

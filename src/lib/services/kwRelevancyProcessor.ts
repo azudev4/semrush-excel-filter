@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { filterByVolume, formatData } from '../excel';
+import { filterByVolume, formatData, deduplicateKeywords } from '../excel';
 import { DEFAULT_MIN_VOLUME, FilteredDataRow, KW_RELEVANCY_COLUMNS } from '@/lib/constants';
 
 interface KeywordOccurrence {
@@ -204,20 +204,30 @@ export const generateKwRelevancyReport = (
   files: ProcessedData[],
   outputFilename: string,
   mainKeyword: string,
-  keepOnlyQuestions: boolean = false
+  keepOnlyQuestions: boolean = false,
+  removeDuplicates: boolean = false
 ): void => {
   const workbook = XLSX.utils.book_new();
   const usedSheetNames = new Set<string>();
 
-  // 1. Filter data if needed
+  // Apply processing steps (filtering for questions, deduplication)
   const processedFiles = files.map(file => {
+    let filteredData = file.filteredData;
+    
+    // First filter for questions if needed
     if (keepOnlyQuestions) {
-      return {
-        ...file,
-        filteredData: filterQuestionKeywords(file.filteredData)
-      };
+      filteredData = filterQuestionKeywords(filteredData);
     }
-    return file;
+    
+    // Then deduplicate if enabled
+    if (removeDuplicates) {
+      filteredData = deduplicateKeywords(filteredData);
+    }
+    
+    return {
+      ...file,
+      filteredData
+    };
   });
 
   // 2. Create keyword map and process data for summary

@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
 import { FileData, DEFAULT_STORES, FilteredDataRow, KSUG_FORMATTER_COLUMNS } from '../constants';
-import { formatData, filterByVolume } from '../excel';
+import { formatData, filterByVolume, deduplicateKeywords } from '../excel';
 
 export const processExcelFile = async (
   file: File, 
@@ -238,7 +238,8 @@ const defaultStyles: ExcelStyles = {
 export const downloadExcelFile = (
   files: FileData[],
   outputFilename: string,
-  includeSummarySheet: boolean
+  includeSummarySheet: boolean,
+  removeDuplicates: boolean = false
 ): void => {
   if (files.length === 0) return;
 
@@ -260,9 +261,20 @@ export const downloadExcelFile = (
     return sheetName;
   };
 
+  // Apply deduplication to files if enabled
+  const processedFiles = files.map(file => {
+    if (removeDuplicates) {
+      return {
+        ...file,
+        filteredData: deduplicateKeywords(file.filteredData)
+      };
+    }
+    return file;
+  });
+
   // First add summary sheet if enabled
   if (includeSummarySheet) {
-    const sheetSummaries = files.map(file => {
+    const sheetSummaries = processedFiles.map(file => {
       const totalVolume = file.filteredData.reduce((sum, row) => {
         const volume = typeof row.Volume === 'string' ? parseInt(row.Volume, 10) : (row.Volume as number);
         return sum + (isNaN(volume) ? 0 : volume);
@@ -404,7 +416,7 @@ export const downloadExcelFile = (
   }
 
   // Then add combined keywords sheet
-  const allKeywords = files.flatMap(file => 
+  const allKeywords = processedFiles.flatMap(file => 
     file.filteredData.map(row => ({
       Keyword: row.Keyword,
       Intent: row.Intent,
@@ -412,8 +424,13 @@ export const downloadExcelFile = (
     }))
   );
 
-  if (allKeywords.length > 0) {
-    const combinedWorksheet = XLSX.utils.json_to_sheet(allKeywords, {
+  // If remove duplicates is enabled, deduplicate the combined list too
+  const finalAllKeywords = removeDuplicates 
+    ? deduplicateKeywords(allKeywords)
+    : allKeywords;
+  
+  if (finalAllKeywords.length > 0) {
+    const combinedWorksheet = XLSX.utils.json_to_sheet(finalAllKeywords, {
       header: KSUG_FORMATTER_COLUMNS
     });
 
@@ -470,7 +487,7 @@ export const downloadExcelFile = (
   }
 
   // Finally add individual sheets
-  files.forEach(file => {
+  processedFiles.forEach(file => {
     const worksheet = XLSX.utils.json_to_sheet(file.filteredData, {
       header: ['Keyword', 'Intent', 'Volume']
     });

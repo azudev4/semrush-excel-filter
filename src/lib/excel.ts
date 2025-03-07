@@ -109,3 +109,79 @@ export const filterByVolume = <T extends {Volume: number}>(
     return !isNaN(volume) && volume >= minVolume;
   });
 };
+
+/**
+ * Normalizes a keyword for comparison to detect similar keywords
+ * - Converts to lowercase
+ * - Normalizes accented characters (é->e, ç->c, etc.)
+ * - Removes hyphens, special characters
+ * - Standardizes whitespace
+ * - Handles basic stemming (e.g., plurals, common variations)
+ */
+export const normalizeKeyword = (keyword: string): string => {
+  if (!keyword) return '';
+  
+  // Convert to lowercase
+  let normalized = keyword.toLowerCase();
+  
+  // Normalize accented characters (é->e, ç->c, ñ->n, etc.)
+  normalized = normalized
+    .normalize('NFD')                   // Decompose accented chars
+    .replace(/[\u0300-\u036f]/g, '')    // Remove diacritical marks
+    .replace(/œ/g, 'oe')                // Handle special ligatures like œ
+    .replace(/æ/g, 'ae')                // Handle æ ligature
+    .replace(/ø/g, 'o')                 // Handle ø (used in Nordic languages)
+    .replace(/ß/g, 'ss');               // Handle German eszett
+  
+  // Remove special characters and standardize separators
+  normalized = normalized
+    .replace(/[-_&\/\\,.~''"""()[\]{}]/g, ' ') // Replace special chars with spaces
+    .replace(/\s+/g, ' ')                     // Standardize whitespace
+    .trim();                                   // Remove leading/trailing whitespace
+  
+  // Basic stemming for plurals (very simplified)
+  // This could be expanded with a proper stemming library for better results
+  normalized = normalized
+    .replace(/(\w+)s\b/g, '$1')   // Remove trailing 's' for basic plural handling
+    .replace(/(\w+)es\b/g, '$1')  // Handle 'es' plurals
+    .replace(/(\w+)ies\b/g, '$1y') // Handle 'ies' plurals (e.g., categories -> category)
+    // French plural forms
+    .replace(/(\w+)aux\b/g, '$1al')  // Handle French "-aux" plurals
+    .replace(/(\w+)eux\b/g, '$1eu');  // Handle French "-eux" plurals
+  
+  return normalized;
+};
+
+/**
+ * Groups similar keywords and keeps only the one with highest volume
+ */
+export const deduplicateKeywords = <T extends { Keyword: string; Volume: number | string }>(
+  data: T[]
+): T[] => {
+  // Group by normalized keyword
+  const groupedKeywords: Record<string, T[]> = {};
+  
+  data.forEach(item => {
+    const normalizedKeyword = normalizeKeyword(item.Keyword);
+    if (!groupedKeywords[normalizedKeyword]) {
+      groupedKeywords[normalizedKeyword] = [];
+    }
+    groupedKeywords[normalizedKeyword].push(item);
+  });
+  
+  // For each group, keep only the item with highest volume
+  const deduplicated: T[] = [];
+  
+  Object.values(groupedKeywords).forEach(group => {
+    // Sort by volume in descending order and take the first one
+    const sorted = [...group].sort((a, b) => {
+      const volumeA = typeof a.Volume === 'number' ? a.Volume : parseInt(String(a.Volume), 10) || 0;
+      const volumeB = typeof b.Volume === 'number' ? b.Volume : parseInt(String(b.Volume), 10) || 0;
+      return volumeB - volumeA;
+    });
+    
+    deduplicated.push(sorted[0]);
+  });
+  
+  return deduplicated;
+};

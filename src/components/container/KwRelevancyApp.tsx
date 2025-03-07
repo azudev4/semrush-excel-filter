@@ -35,6 +35,7 @@ const KwRelevancyApp = () => {
   const [keepOnlyQuestions, setKeepOnlyQuestions] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [removeDuplicates, setRemoveDuplicates] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -96,7 +97,13 @@ const KwRelevancyApp = () => {
     
     // Use setTimeout to allow the dialog to render before starting the processing
     setTimeout(() => {
-      generateKwRelevancyReport(files, outputFilename, mainKeyword, keepOnlyQuestions);
+      generateKwRelevancyReport(
+        files, 
+        outputFilename, 
+        mainKeyword, 
+        keepOnlyQuestions,
+        removeDuplicates
+      );
       setIsDownloading(false);
     }, 100);
   };
@@ -165,11 +172,13 @@ const KwRelevancyApp = () => {
                 setOutputFilename={setOutputFilename}
                 includeSummarySheet={includeSummarySheet}
                 setIncludeSummarySheet={setIncludeSummarySheet}
-                onDownload={handleDownload}
-                disabled={files.length === 0}
                 showQuestionFilter={true}
                 keepOnlyQuestions={keepOnlyQuestions}
                 setKeepOnlyQuestions={setKeepOnlyQuestions}
+                removeDuplicates={removeDuplicates}
+                setRemoveDuplicates={setRemoveDuplicates}
+                onDownload={handleDownload}
+                disabled={files.length === 0}
               />
             </div>
 

@@ -7,12 +7,14 @@ interface KeywordOccurrence {
   position: string | number;
   volume: number;
   type: string;
+  url?: string;
   occurrences: number;
   totalVolume: number;
   competitors: Array<{
     name: string;
     position: string | number;
     volume: number;
+    url?: string;
   }>;
 }
 
@@ -38,10 +40,27 @@ export const processKwRelevancyFile = async (
     const match = filename.match(/^([^-]+)-organic\.Positions-([^-]+)/);
     if (match) {
       const [, domain, region] = match;
+      // Clean up domain name by removing URL prefixes and fixing underscores
+      const cleanDomain = domain
+        .replace(/^https?___/, '')      // Remove http___ or https___
+        .replace(/^www\./, '')          // Remove www.
+        .replace(/___/g, '.')           // Replace triple underscores with dots
+        .replace(/__/g, '/')            // Replace double underscores with slashes
+        .replace(/_+$/, '');            // Remove trailing underscores
+      
       // Keep the full domain name with the dot
-      return `${domain}_${region}`.toLowerCase();
+      return `${cleanDomain}_${region}`.toLowerCase();
     }
-    return sheetName; // Fallback to original sheetName if pattern doesn't match
+    
+    // If the standard pattern doesn't match, still clean up any URL prefixes
+    const cleanName = sheetName
+      .replace(/^https?___/, '')      // Remove http___ or https___
+      .replace(/^www\./, '')          // Remove www.
+      .replace(/___/g, '.')           // Replace triple underscores with dots
+      .replace(/__/g, '/')            // Replace double underscores with slashes
+      .replace(/_+$/, '');            // Remove trailing underscores
+    
+    return cleanName; // Fallback to cleaned original sheetName
   };
 
   return new Promise((resolve, reject) => {
@@ -80,6 +99,7 @@ export const processKwRelevancyFile = async (
         const volumeColumn = headers.find(h => /volume|search.?volume/i.test(h));
         let positionColumn = headers.find(h => /position/i.test(h));
         let typeColumn = headers.find(h => /position.?type|type/i.test(h));
+        const urlColumn = headers.find(h => /url|link/i.test(h));
 
         if (!keywordColumn) throw new Error('MISSING_KEYWORD_COLUMN');
         if (!volumeColumn) throw new Error('MISSING_VOLUME_COLUMN');
@@ -99,7 +119,8 @@ export const processKwRelevancyFile = async (
               Keyword: String((row as Record<string, unknown>)[keywordColumn] || ''),
               Position: String((row as Record<string, unknown>)[positionColumn] || ''),
               Volume: (row as Record<string, unknown>)[volumeColumn] as string | number,
-              Type: String((row as Record<string, unknown>)[typeColumn] || '')
+              Type: String((row as Record<string, unknown>)[typeColumn] || ''),
+              URL: urlColumn ? String((row as Record<string, unknown>)[urlColumn] || '') : ''
             };
             
             return formatData([mappedRow], KW_RELEVANCY_COLUMNS)[0];
@@ -222,7 +243,8 @@ export const generateKwRelevancyReport = (
           existing.competitors.push({
             name: file.sheetName,
             position: row.Position || '',
-            volume: isNaN(volume) ? 0 : volume
+            volume: isNaN(volume) ? 0 : volume,
+            url: row.URL || ''
           });
         } else {
           // Update existing competitor with best position if found
@@ -238,12 +260,14 @@ export const generateKwRelevancyReport = (
           position: row.Position || '',
           volume: isNaN(volume) ? 0 : volume,
           type: row.Type || '',
+          url: row.URL || '',
           occurrences: 1,
           totalVolume: isNaN(volume) ? 0 : volume,
           competitors: [{
             name: file.sheetName,
             position: row.Position || '',
-            volume: isNaN(volume) ? 0 : volume
+            volume: isNaN(volume) ? 0 : volume,
+            url: row.URL || ''
           }]
         });
       }
@@ -352,8 +376,8 @@ export const generateKwRelevancyReport = (
 
   // Merge cells for headers and title
   summarySheet['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Main title
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Opportunities header
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Main title (spans 6 columns)
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Opportunities header (spans 6 columns)
   ];
 
   // Style the sheet
@@ -458,7 +482,7 @@ export const generateKwRelevancyReport = (
     if (file.filteredData.length === 0) {
       // Create empty sheet with message
       worksheet = XLSX.utils.aoa_to_sheet([
-        ['Keyword', 'Position', 'Volume', 'Type'],
+        ['Keyword', 'Position', 'Volume', 'Type', 'URL'],
         ['No corresponding rows were detected']
       ]);
       
@@ -497,11 +521,11 @@ export const generateKwRelevancyReport = (
 
       // Merge cells for the message
       worksheet['!merges'] = [
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }  // Message spans all columns
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }  // Message spans all columns (now 5 columns)
       ];
 
       // Set the reference range
-      worksheet['!ref'] = 'A1:D2';
+      worksheet['!ref'] = 'A1:E2';
     } else {
       // Sort the filtered data by volume in descending order
       const sortedData = [...file.filteredData].sort((a, b) => {
@@ -513,12 +537,13 @@ export const generateKwRelevancyReport = (
       worksheet = XLSX.utils.json_to_sheet(sortedData);
     }
     
-    // Set column widths
+    // Set column widths for individual sheets
     worksheet['!cols'] = [
       { wch: 40 }, // Keyword
       { wch: 10 }, // Position
       { wch: 15 }, // Volume
       { wch: 15 }, // Type
+      { wch: 80 }, // URL - Increased from 50 to 80 for better visibility
     ];
 
     // Style the sheet

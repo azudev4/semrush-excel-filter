@@ -60,6 +60,10 @@ export const formatData = (
         formattedRow.Intent = String(row.Intent || '');
       }
       
+      if (columns.includes('URL')) {
+        formattedRow.URL = String(row.URL || '');
+      }
+      
       return formattedRow as FilteredDataRow;
     });
     

@@ -1277,6 +1277,7 @@ export interface FilteredDataRow {
   Volume: number;
   Type?: string;              // Made optional
   Intent?: string;            // Already optional
+  URL?: string;               // Add the URL field as optional
 }
 
 export interface ExtendedInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -1286,4 +1287,4 @@ export interface ExtendedInputProps extends InputHTMLAttributes<HTMLInputElement
 
 // Define column configurations for each tool
 export const KSUG_FORMATTER_COLUMNS = ['Keyword', 'Intent', 'Volume'] as string[];
-export const KW_RELEVANCY_COLUMNS = ['Keyword', 'Position', 'Volume', 'Type'] as string[]; 
+export const KW_RELEVANCY_COLUMNS = ['Keyword', 'Position', 'Volume', 'Type', 'URL'] as string[]; 

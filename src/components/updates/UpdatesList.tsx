@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, GitCommit, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 export const UpdatesList = () => {
   const [commits, setCommits] = useState<FormattedCommit[]>([]);
@@ -78,10 +79,13 @@ export const UpdatesList = () => {
             transition={{ duration: 0.3, delay: index * 0.05 }}
           >
             <div className="flex items-start gap-3">
-              <img 
+              <Image 
                 src={commit.avatarUrl} 
                 alt={commit.author} 
+                width={500}
+                height={300}
                 className="w-8 h-8 rounded-full mt-1"
+                priority={index === 0}
               />
               
               <div className="flex-1">

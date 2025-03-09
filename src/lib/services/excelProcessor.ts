@@ -429,6 +429,13 @@ export const downloadExcelFile = (
     ? deduplicateKeywords(allKeywords)
     : allKeywords;
   
+  // Trier les mots-clés par volume (du plus grand au plus petit)
+  finalAllKeywords.sort((a, b) => {
+    const volumeA = typeof a.Volume === 'string' ? parseInt(a.Volume, 10) : (a.Volume as number);
+    const volumeB = typeof b.Volume === 'string' ? parseInt(b.Volume, 10) : (b.Volume as number);
+    return volumeB - volumeA; // Ordre décroissant
+  });
+  
   if (finalAllKeywords.length > 0) {
     const combinedWorksheet = XLSX.utils.json_to_sheet(finalAllKeywords, {
       header: KSUG_FORMATTER_COLUMNS

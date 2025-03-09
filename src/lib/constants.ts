@@ -72,7 +72,7 @@ export const DEFAULT_STORES = [
   
   // South American & African Fashion
   'renner',
-  'c&a brazil',
+  'c&a',
   'riachuelo',
   'falabella',
   'ripley',
@@ -289,6 +289,24 @@ export const DEFAULT_STORES = [
   'kookai',
   'marithe francois girbaud',
   'girbaud',
+  'armand thiery',
+  'jules',
+  'kiabi',
+  'caroll',
+  'naf naf',
+  'etam',
+  'comptoir des cotonniers',
+  'ba&sh',
+  'bash',
+  'ba sh',
+  'ba and sh',
+  'petit bateau',
+  'jennyfer',
+  'bizzbee',
+  'brice',
+  'celio',
+  'devred',
+  'devred 1902',
   
   // French Casual & Sportswear
   'le coq sportif',

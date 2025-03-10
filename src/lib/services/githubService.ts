@@ -1,4 +1,4 @@
-interface Commit {
+In thinterface Commit {
   sha: string;
   commit: {
     author: {

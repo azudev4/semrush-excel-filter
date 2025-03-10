@@ -133,6 +133,12 @@ export const processExcelFile = async (
           })
         );
 
+        // Après avoir chargé les données initiales:
+        const storeFilteredData = filterStoreNames(volumeFilteredData, shops);
+
+        // Puis calculez le nombre de lignes filtrées:
+        const storeFilteredRows = volumeFilteredData.length - storeFilteredData.length;
+
         resolve({
           id: Math.random().toString(36).substr(2, 9),
           originalData: formattedJsonData,
@@ -141,7 +147,7 @@ export const processExcelFile = async (
           sheetName: sheetName || file.name.split('.')[0],
           originalRows: originalRowCount,
           filteredRows: fullyFilteredData.length,
-          storeFilteredRows: volumeFilteredData.length - afterDefaultShops.length,
+          storeFilteredRows: storeFilteredRows,
           customStoreFilteredRows: afterDefaultShops.length - fullyFilteredData.length,
           volumeFilteredRows: formattedJsonData.length - volumeFilteredData.length
         });
@@ -575,4 +581,27 @@ export const downloadExcelFile = (
 
   // Save the workbook
   XLSX.writeFile(workbook, `${outputFilename}.xlsx`);
+};
+
+const filterStoreNames = (data: FilteredDataRow[], storeNames: string[]): FilteredDataRow[] => {
+  // Créer un tableau d'expressions régulières à partir des noms de magasins
+  const storeRegexes = storeNames.map(store => {
+    // Normaliser le nom du magasin
+    const normalizedStore = store.toLowerCase()
+      .replace(/[-&\/\\,.~''"""()[\]{}]/g, '.?')
+      .trim();
+    
+    // Créer une regex qui cherche le nom du magasin comme mot entier
+    // avec prise en compte des variations possibles
+    return new RegExp(`\\b${normalizedStore}\\b|\\b${normalizedStore}s\\b`, 'i');
+  });
+
+  // Filtrer les lignes dont le mot-clé ne contient pas de nom de magasin
+  return data.filter(row => {
+    // Normaliser le mot-clé pour la comparaison
+    const keyword = row.Keyword.toLowerCase();
+    
+    // Vérifier si le mot-clé contient l'un des noms de magasins
+    return !storeRegexes.some(regex => regex.test(keyword));
+  });
 };

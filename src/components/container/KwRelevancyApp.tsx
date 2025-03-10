@@ -177,8 +177,7 @@ const KwRelevancyApp = () => {
                 setKeepOnlyQuestions={setKeepOnlyQuestions}
                 removeDuplicates={removeDuplicates}
                 setRemoveDuplicates={setRemoveDuplicates}
-                onDownload={handleDownload}
-                disabled={files.length === 0}
+                handleDownload={handleDownload}
               />
             </div>
 

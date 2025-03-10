@@ -14,13 +14,12 @@ interface DownloadSectionProps {
   setOutputFilename: (name: string) => void;
   includeSummarySheet: boolean;
   setIncludeSummarySheet: (include: boolean) => void;
-  onDownload: () => void;
-  disabled: boolean;
+  removeDuplicates: boolean;
+  setRemoveDuplicates: (remove: boolean) => void;
+  handleDownload: () => void;
   showQuestionFilter?: boolean;
   keepOnlyQuestions?: boolean;
   setKeepOnlyQuestions?: (keep: boolean) => void;
-  removeDuplicates?: boolean;
-  setRemoveDuplicates?: (remove: boolean) => void;
 }
 
 export const DownloadSection: React.FC<DownloadSectionProps> = ({
@@ -28,13 +27,12 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
   setOutputFilename,
   includeSummarySheet,
   setIncludeSummarySheet,
-  onDownload,
-  disabled,
+  removeDuplicates,
+  setRemoveDuplicates,
+  handleDownload,
   showQuestionFilter = false,
   keepOnlyQuestions = false,
   setKeepOnlyQuestions = () => {},
-  removeDuplicates = true,
-  setRemoveDuplicates = () => {},
 }) => {
   return (
     <div className="border-t pt-6">
@@ -144,8 +142,7 @@ export const DownloadSection: React.FC<DownloadSectionProps> = ({
         </div>
         <Button 
           className="whitespace-nowrap h-full px-6 bg-[#004526] hover:bg-[#004526]/90" 
-          onClick={onDownload}
-          disabled={disabled}
+          onClick={handleDownload}
         >
           <Download className="w-4 h-4 mr-2" />
           Download Combined File

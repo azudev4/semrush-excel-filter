@@ -32,7 +32,7 @@ const ExcelFilterApp = () => {
   const [minVolume, setMinVolume] = useState(DEFAULT_MIN_VOLUME);
   const [outputFilename, setOutputFilename] = useState('combined_filtered_data');
   const [includeSummarySheet, setIncludeSummarySheet] = useState(true);
-  const [removeDuplicates, setRemoveDuplicates] = useState(false);
+  const [removeDuplicates, setRemoveDuplicates] = useState(true);
 
   const shops = [...defaultShops, ...customShops];
 
@@ -82,7 +82,14 @@ const ExcelFilterApp = () => {
   };
 
   const handleDownload = () => {
-    downloadExcelFile(files, outputFilename, includeSummarySheet, removeDuplicates);
+    downloadExcelFile(
+      files, 
+      outputFilename, 
+      includeSummarySheet, 
+      removeDuplicates,
+      [...defaultShops, ...customShops],
+      minVolume
+    );
   };
 
   const volumeFilterCount = files.reduce((sum, file) => sum + file.volumeFilteredRows, 0);
@@ -145,8 +152,7 @@ const ExcelFilterApp = () => {
                 setIncludeSummarySheet={setIncludeSummarySheet}
                 removeDuplicates={removeDuplicates}
                 setRemoveDuplicates={setRemoveDuplicates}
-                onDownload={handleDownload}
-                disabled={files.length === 0}
+                handleDownload={handleDownload}
               />
             </div>
 

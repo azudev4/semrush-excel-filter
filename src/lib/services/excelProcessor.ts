@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { FileData, DEFAULT_STORES, FilteredDataRow, KSUG_FORMATTER_COLUMNS } from '../constants';
+import { FileData, DEFAULT_STORES, FilteredDataRow, KSUG_FORMATTER_COLUMNS, DEFAULT_MIN_VOLUME } from '../constants';
 import { formatData, filterByVolume, deduplicateKeywords } from '../excel';
 
 export const processExcelFile = async (
@@ -245,7 +245,9 @@ export const downloadExcelFile = (
   files: FileData[],
   outputFilename: string,
   includeSummarySheet: boolean,
-  removeDuplicates: boolean = false
+  removeDuplicates: boolean = false,
+  shops: string[] = [],
+  minVolume: number = DEFAULT_MIN_VOLUME
 ): void => {
   if (files.length === 0) return;
 
@@ -293,132 +295,388 @@ export const downloadExcelFile = (
     }).sort((a, b) => b.totalVolume - a.totalVolume);
 
     const grandTotal = sheetSummaries.reduce((sum, sheet) => sum + sheet.totalVolume, 0);
+    const totalKeywords = sheetSummaries.reduce((sum, sheet) => sum + sheet.keywordCount, 0);
     
-    const summaryData = [
-      ['Sheet Name', 'Number of Keywords', 'Total Search Volume'],
-      ...sheetSummaries.map(summary => [
+    // Définir le type explicitement pour summaryData
+    const summaryData: (string | { v: string; l: { Target: string; Tooltip: string } })[][] = [
+      ['Keyword Analysis'],
+      [`Generated on ${new Date().toLocaleDateString()}`],
+      []
+    ];
+    
+    // Ajouter la section des métriques clés
+    summaryData.push(
+      ['Key Metrics'],
+      ['Number of Sheets', String(sheetSummaries.length)],
+      ['Total Keywords', String(totalKeywords)],
+      ['Total Search Volume', String(grandTotal)],
+      []  // Ligne vide pour l'espacement
+    );
+    
+    // Ajouter le tableau des détails des feuilles avec en-têtes
+    summaryData.push(
+      ['Sheet Details'],
+      ['Sheet Name', 'Keywords', 'Search Volume', 'Average Volume', '% of Total Volume']
+    );
+    
+    // Ajouter les lignes de données
+    sheetSummaries.forEach(summary => {
+      const avgVolume = summary.keywordCount > 0 ? Math.round(summary.totalVolume / summary.keywordCount) : 0;
+      const percentOfTotal = grandTotal > 0 ? (summary.totalVolume / grandTotal * 100).toFixed(1) + '%' : '0%';
+      
+      summaryData.push([
         { 
           v: summary.sheetName,
           l: { 
             Target: `#'${summary.sheetName}'!A1`,
-            Tooltip: `Go to ${summary.sheetName} sheet`
+            Tooltip: `Go to sheet ${summary.sheetName}`
           }
         },
-        summary.keywordCount,
-        summary.totalVolume
-      ]),
-      ['TOTAL', 
-        sheetSummaries.reduce((sum, sheet) => sum + sheet.keywordCount, 0),
-        grandTotal
-      ]
-    ];
+        String(summary.keywordCount),
+        String(summary.totalVolume),
+        String(avgVolume),
+        percentOfTotal
+      ]);
+    });
+    
+    // Ajouter la ligne des totaux
+    summaryData.push(
+      ['TOTAL', String(totalKeywords), String(grandTotal), String(Math.round(grandTotal / totalKeywords) || 0), '100%']
+    );
+    
+    // Ajouter une ligne vide pour l'espacement
+    summaryData.push([]);
+    
+    // Ajouter les paramètres de filtrage
+    summaryData.push(
+      ['Filter Parameters'],
+      ['Minimum Volume', String(minVolume)],
+      ['Duplicate Removal', removeDuplicates ? 'Enabled' : 'Disabled'],
+      ['Filtered Stores', shops.join(', ')],
+      []  // Ligne vide pour l'espacement
+    );
+    
+    // Ajouter les instructions et notes
+    summaryData.push(
+      ['Notes'],
+      ['• Click on sheet names to navigate directly to respective sheets'],
+      ['• All keywords have been filtered by minimum search volume and store names'],
+      ['• Sheets are sorted by total search volume (highest to lowest)'],
+      ['• When duplicate removal is enabled, very similar keywords (like "T-shirt" vs "t shirt" or "polos" & "polo") are considered duplicates and only the variation with the highest search volume is kept'],
+      ['• This report was generated using the tool available at https://semrush-excel-filter.vercel.app/']
+    );
 
     const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
     
-    // Add hyperlink styling after sheet creation
-    sheetSummaries.forEach((_, index) => {
-      const cellRef = XLSX.utils.encode_cell({ r: index + 1, c: 0 });
-      if (summaryWorksheet[cellRef]) {
-        summaryWorksheet[cellRef].s = {
-          font: {
-            name: 'Calibri',
-            sz: 11,
-            underline: true,
-            color: { rgb: "0B5394" },  // Darker blue-green color
+    // Définir tous les styles dont nous avons besoin
+    const titleStyle = {
+      font: { 
+        bold: true,
+        sz: 16,
+        color: { rgb: "FFFFFF" }
+      },
+      fill: {
+        patternType: "solid",
+        fgColor: { rgb: "004526" }
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center"
+      },
+      border: {
+        bottom: { style: "thin", color: { rgb: "FFFFFF" } }
+      }
+    };
+    
+    const subtitleStyle = {
+      font: { 
+        italic: true,
+        sz: 11,
+        color: { rgb: "FFFFFF" } 
+      },
+      fill: { 
+        patternType: "solid", 
+        fgColor: { rgb: "004526" } 
+      },
+      alignment: { 
+        horizontal: "center", 
+        vertical: "center" 
+      }
+    };
+    
+    const sectionHeaderStyle = {
+      font: { 
+        bold: true, 
+        sz: 12, 
+        color: { rgb: "FFFFFF" } 
+      },
+      fill: { 
+        patternType: "solid", 
+        fgColor: { rgb: "004526" } 
+      },
+      alignment: { 
+        horizontal: "left", 
+        vertical: "center"
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "B0B0B0" } },
+        bottom: { style: "thin", color: { rgb: "B0B0B0" } }
+      }
+    };
+    
+    const tableHeaderStyle = {
+          font: { 
+            bold: true,
+            color: { rgb: "FFFFFF" }
+          },
+          fill: {
+            patternType: "solid",
+            fgColor: { rgb: "004526" }
+          },
+          alignment: {
+            horizontal: "center",
+            vertical: "center"
           },
           border: {
             top: { style: "thin", color: { rgb: "B0B0B0" } },
             bottom: { style: "thin", color: { rgb: "B0B0B0" } },
             left: { style: "thin", color: { rgb: "B0B0B0" } },
             right: { style: "thin", color: { rgb: "B0B0B0" } }
-          },
-          alignment: {
-            horizontal: "left",
-            vertical: "center"
           }
         };
-
-        // Add the visited color state
-        summaryWorksheet[cellRef].s2 = {
-          font: {
-            name: 'Calibri',
-            sz: 11,
-            underline: true,
-            color: { theme: 11 },  // Use Excel's built-in visited hyperlink theme color
-          }
-        };
-      }
-    });
-
-    summaryWorksheet['!cols'] = [
-      { wch: 30 },
-      { wch: 20 },
-      { wch: 20 },
-    ];
-
-    const range = XLSX.utils.decode_range(summaryWorksheet['!ref'] || 'A1:C1');
     
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
+    const metricLabelStyle = {
+      font: { 
+        bold: true,
+      },
+      alignment: { 
+        horizontal: "left", 
+        vertical: "center" 
+      }
+    };
+    
+    const metricValueStyle = {
+      alignment: { 
+        horizontal: "right", 
+        vertical: "center" 
+      },
+      font: {
+        bold: true,
+        color: { rgb: "004526" }
+      }
+    };
+    
+    const hyperlinkStyle = {
+      font: {
+        sz: 11,
+        underline: true,
+        color: { rgb: "0B5394" },
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "B0B0B0" } },
+        bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+        left: { style: "thin", color: { rgb: "B0B0B0" } },
+        right: { style: "thin", color: { rgb: "B0B0B0" } }
+      },
+      alignment: {
+        horizontal: "left",
+        vertical: "center"
+      }
+    };
+    
+    const totalRowStyle = {
+      font: { 
+        bold: true,
+        color: { rgb: "FFFFFF" }
+      },
+      fill: {
+        patternType: "solid",
+        fgColor: { rgb: "C00000" }
+      },
+      alignment: {
+        horizontal: "right",
+        vertical: "center"
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "B0B0B0" } },
+        bottom: { style: "thin", color: { rgb: "B0B0B0" } },
+        left: { style: "thin", color: { rgb: "B0B0B0" } },
+        right: { style: "thin", color: { rgb: "B0B0B0" } }
+      }
+    };
+    
+    const noteStyle = {
+      font: { 
+        italic: true,
+        sz: 10,
+        color: { rgb: "666666" }
+      },
+      alignment: { 
+        horizontal: "left", 
+        vertical: "center" 
+      }
+    };
+    
+    const noteHeaderStyle = {
+      font: { 
+        bold: true, 
+        sz: 11, 
+        color: { rgb: "004526" } 
+      },
+      alignment: { 
+        horizontal: "left", 
+        vertical: "center" 
+      },
+      border: {
+        bottom: { style: "thin", color: { rgb: "004526" } }
+      }
+    };
+    
+    // Appliquer les styles aux cellules
+    const range = XLSX.utils.decode_range(summaryWorksheet['!ref'] || 'A1:E1');
+    
+    // Appliquer les styles de cellule en fonction du contenu de la ligne
+    for (let R = 0; R <= range.e.r; R++) {
+      for (let C = 0; C <= range.e.c; C++) {
         const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
         if (!summaryWorksheet[cell_ref]) continue;
-
+        
+        // Obtenir la cellule
         const cell = summaryWorksheet[cell_ref];
         
+        // Ligne de titre
         if (R === 0) {
-          cell.s = headerStyle;
-        } else if (R === range.e.r) {
+          cell.s = titleStyle;
+        }
+        // Ligne de sous-titre
+        else if (R === 1) {
+          cell.s = subtitleStyle;
+        }
+        // En-tête de section Métriques clés
+        else if (R === 3 && C === 0) {
+          cell.s = sectionHeaderStyle;
+        }
+        // Étiquettes des métriques clés
+        else if (R >= 4 && R <= 6 && C === 0) {
+          cell.s = metricLabelStyle;
+        }
+        // Valeurs des métriques clés
+        else if (R >= 4 && R <= 6 && C === 1) {
+          cell.s = metricValueStyle;
+        }
+        // En-tête de section Détails des feuilles
+        else if (R === 8 && C === 0) {
+          cell.s = sectionHeaderStyle;
+        }
+        // Ligne d'en-tête du tableau
+        else if (R === 9) {
+          cell.s = tableHeaderStyle;
+        }
+        // Lignes de données - noms de feuilles avec hyperliens
+        else if (R >= 10 && R < 10 + sheetSummaries.length && C === 0 && cell.l) {
+          cell.s = hyperlinkStyle;
+        }
+        // Lignes de données - autres valeurs
+        else if (R >= 10 && R < 10 + sheetSummaries.length && C > 0) {
           cell.s = {
-            font: { 
-              bold: true,
-              color: { rgb: "FFFFFF" }
-            },
-            fill: {
-              patternType: "solid",
-              fgColor: { rgb: "DC2626" }
-            },
-            alignment: {
-              horizontal: C === 0 ? "left" : "right",
-              vertical: "center"
-            },
             border: {
               top: { style: "thin", color: { rgb: "B0B0B0" } },
               bottom: { style: "thin", color: { rgb: "B0B0B0" } },
               left: { style: "thin", color: { rgb: "B0B0B0" } },
               right: { style: "thin", color: { rgb: "B0B0B0" } }
+            },
+            fill: {
+              patternType: "solid",
+              fgColor: { rgb: R % 2 === 0 ? "F0F7F4" : "FFFFFF" }
+            },
+            alignment: {
+              horizontal: "right",
+              vertical: "center"
             }
           };
-        } else {
-          // Preserve hyperlink styling for the first column
-          if (C === 0 && cell.l) {
+        }
+        // Ligne des totaux
+        else if (R === 10 + sheetSummaries.length) {
+          if (C === 0) {
             cell.s = {
-              font: {
-                color: { rgb: "0B5394" },  // Same darker blue-green color
-                underline: true
-              },
-              border: cellStyle.border,
+              ...totalRowStyle,
               alignment: {
                 horizontal: "left",
                 vertical: "center"
-              },
-              ...(R % 2 === 1 ? { fill: alternateRowStyle.fill } : {})
+              }
             };
           } else {
-            cell.s = R % 2 === 1 
-              ? { ...cellStyle, ...alternateRowStyle }
-              : cellStyle;
+            cell.s = totalRowStyle;
           }
         }
-
-        if (C === 1 || C === 2) {
+        // En-tête des paramètres de filtrage
+        else if (R === 12 + sheetSummaries.length) {
+          cell.s = sectionHeaderStyle;
+        }
+        // Paramètres de filtrage - étiquettes
+        else if (R >= 13 + sheetSummaries.length && R <= 15 + sheetSummaries.length && C === 0) {
+          cell.s = metricLabelStyle;
+        }
+        // Paramètres de filtrage - valeurs
+        else if (R >= 13 + sheetSummaries.length && R <= 15 + sheetSummaries.length && C === 1) {
+          cell.s = metricValueStyle;
+        }
+        // En-tête des notes
+        else if (R === 17 + sheetSummaries.length) {
+          cell.s = noteHeaderStyle;
+        }
+        // Notes
+        else if (R >= 18 + sheetSummaries.length) {
+          cell.s = noteStyle;
+        }
+        
+        // Formatage des nombres
+        if ((C === 2 || C === 3) && R >= 10) {
+          // Colonnes Volume de recherche et Volume moyen
           cell.z = '#,##0';
         }
       }
     }
-
-    summaryWorksheet['!rows'] = Array(range.e.r + 1).fill({ hpt: 20 });
-    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, '📊 Summary');
-    usedSheetNames.add('📊 Summary');
+    
+    // Définir les largeurs de colonne
+    summaryWorksheet['!cols'] = [
+      { wch: 40 }, // Nom de la feuille
+      { wch: 15 }, // Mots-clés
+      { wch: 18 }, // Volume de recherche
+      { wch: 15 }, // Volume moyen
+      { wch: 18 }, // % du total
+    ];
+    
+    // Fusionner les cellules pour les titres et en-têtes
+    summaryWorksheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Titre
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, // Sous-titre
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }, // En-tête Métriques clés
+      { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } }, // En-tête Détails des feuilles
+      { s: { r: 12 + sheetSummaries.length, c: 0 }, e: { r: 12 + sheetSummaries.length, c: 4 } }, // En-tête Paramètres de filtrage
+      { s: { r: 17 + sheetSummaries.length, c: 0 }, e: { r: 17 + sheetSummaries.length, c: 4 } }, // En-tête Notes
+    ];
+    
+    // Définir les hauteurs de ligne
+    summaryWorksheet['!rows'] = [];
+    for (let i = 0; i <= range.e.r; i++) {
+      if (i === 0) {
+        summaryWorksheet['!rows'][i] = { hpt: 30 }; // Ligne de titre
+      } else if (i === 1) {
+        summaryWorksheet['!rows'][i] = { hpt: 25 }; // Ligne de sous-titre
+      } else if (i === 3 || i === 8 || i === 12 + sheetSummaries.length || i === 17 + sheetSummaries.length) {
+        summaryWorksheet['!rows'][i] = { hpt: 25 }; // En-têtes de section
+      } else if (i === 9) {
+        summaryWorksheet['!rows'][i] = { hpt: 25 }; // En-tête de tableau
+      } else if (i === 10 + sheetSummaries.length) {
+        summaryWorksheet['!rows'][i] = { hpt: 25 }; // Ligne des totaux
+      } else {
+        summaryWorksheet['!rows'][i] = { hpt: 20 }; // Lignes régulières
+      }
+    }
+    
+    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, '📊 Résumé');
+    usedSheetNames.add('📊 Résumé');
   }
 
   // Then add combined keywords sheet
@@ -486,7 +744,7 @@ export const downloadExcelFile = (
             ? { ...baseStyle, ...alternateRowStyle }
             : { ...baseStyle };
           
-          if (C === 2) { // Volume column
+          if (C === 2) {
             cell.z = '#,##0';
           }
         }
@@ -498,7 +756,6 @@ export const downloadExcelFile = (
 
     XLSX.utils.book_append_sheet(workbook, combinedWorksheet, getUniqueSheetName('All Keywords'));
   }
-
   // Finally add individual sheets
   processedFiles.forEach(file => {
     const worksheet = XLSX.utils.json_to_sheet(file.filteredData, {
